@@ -19,8 +19,7 @@ def is_link(path):
         import win32
         return win32.islink(path)
     else:
-        import stat
-        return stat.S_ISLNK(os.stat(path))
+        return os.path.islink(path)
 
 
 def remove(path):
@@ -28,6 +27,15 @@ def remove(path):
         call('cmd /c rm "%s"' % path, shell=True)
     else:
         call('rm "%s"' % path, shell=True)
+
+
+def fs_unlink(path):
+    if platform == 'cygwin' or platform == 'win32':
+        call('cmd /c rm "%s"' % path, shell=True)
+    if platform == 'darwin':
+        call('sh -c "hln -u \"%s\""' % path, shell=True)
+    else:
+        call('unlink "%s"' % path, shell=True)
 
 
 def fs_link(source, target, hard_link=True):
@@ -39,7 +47,7 @@ def fs_link(source, target, hard_link=True):
     :return:
     """
     source = realpath(source)
-    target = realpath(target)
+    target = os.path.abspath(target)
 
     is_directory = os.path.isdir(source)
 
@@ -47,7 +55,7 @@ def fs_link(source, target, hard_link=True):
 
     if os.path.exists(target):
         if is_link(target):
-            remove(target)
+            fs_unlink(target)
         else:
             raise RuntimeError('Folder exists.')
 
@@ -62,5 +70,17 @@ def fs_link(source, target, hard_link=True):
                 call('cmd /C mklink /D "%s" "%s"' % (target, source), shell=True)
             else:
                 call('cmd /C mklink "%s" "%s"' % (target, source), shell=True)
+
     else:
         call('ln -s "%s" "%s"' % (source, target), shell=True)
+    # elif platform == 'darwin':
+    #     if hard_link:
+    #         call('sh -c "hln %s %s"' % (source, target), shell=True)
+    #     else:
+    #         call('ln -s "%s" "%s"' % (source, target), shell=True)
+    # else:
+    #     if hard_link:
+    #         call('ln "%s" "%s"' % (source, target), shell=True)
+    #     else:
+    #         call('ln -s "%s" "%s"' % (source, target), shell=True)
+

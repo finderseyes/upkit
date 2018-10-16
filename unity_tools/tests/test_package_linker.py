@@ -13,13 +13,13 @@ class PackageLinkerTestCase(unittest.TestCase):
                           destination='../../temp',
                           forced=True)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a/a.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a/data.txt'))
 
     def test_link_with_child_packages(self):
-        self._linker.link(name='lib-b',
-                          source='../../tests/lib-b2.0.0/content',
+        self._linker.link(name='lib-a',
+                          source='../../tests/lib-a1.0.1/content',
                           destination='../../temp',
                           forced=True)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-b/b.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a/data.txt'))
 

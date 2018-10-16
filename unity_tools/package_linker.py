@@ -23,7 +23,7 @@ class PackageLinker(object):
     def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
         skipped = info.pop('skipped', False)
         name = info.pop('name', name)
-        source =
+        # source =
 
     def _read_linkspec(self, source):
         linkspec = self._read_linkspec_yaml(source)
