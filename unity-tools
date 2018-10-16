@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
-from unity_tools import foo
+from unity_tools import UnityTools
 
-foo()
+tools = UnityTools()
+tools.run()
+
