@@ -52,14 +52,24 @@ class PackageLinker(object):
             else:
                 content_items = [p for item in content for p in glob.glob(os.path.abspath(os.path.join(source, item)))]
                 for content_item in content_items:
-                    name = ntpath.basename(content_item)
-                    item_target = os.path.abspath(os.join(target, name))
-                    utils.fs_link(content_item, item_target)
+                    content_item_name = os.path.basename(content_item)
+                    content_item_target = os.path.abspath(os.path.join(target, content_item_name))
+                    utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
         else:
             for item in child_packages:
                 item_source = os.path.abspath(os.path.join(source, item['source']))
                 item_target = os.path.abspath(Template(item['target']).render(**params))
-                utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
+
+                content = package_linkspec.get('content', None)
+                if not content:
+                    utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
+                else:
+                    content_items = [p for item in content for p in
+                                     glob.glob(os.path.abspath(os.path.join(item_source, item)))]
+                    for content_item in content_items:
+                        content_item_name = os.path.basename(content_item)
+                        content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
+                        utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
 
     def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
         skipped = info.pop('skipped', False)

@@ -28,7 +28,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     url='https://github.com/finderseyes/unity-tools',
     packages=setuptools.find_packages(),
-    install_requires=['xmltodict', 'pyyaml', 'jinja2', 'ntpath'],
+    install_requires=['xmltodict', 'pyyaml', 'jinja2',],
     cmdclass={
         'install-osx-tools': InstallOSXTools
     },
