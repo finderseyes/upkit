@@ -1,6 +1,7 @@
 import os
 import shutil
 import xmltodict
+from jinja2 import Template
 
 from unity_tools import utils
 
@@ -9,30 +10,63 @@ class PackageLinker(object):
     def __init__(self):
         pass
 
-    def link(self, name=None, source=None, destination=None, params={}, forced=False, ):
+    def link(self, source=None, destination=None, forced=False, name=None, params={}):
+        """
+        Link a source folder to a sub-folder in destination folder using given name.
+        :param source:
+        :param destination:
+        :param forced:
+        :param name:
+        :return:
+        """
         source = utils.realpath(source)
         destination = utils.realpath(destination)
-        target = os.path.join(destination, name)
 
-        if not forced and os.path.exists(target):
-            raise RuntimeError('Path "%s" exists.'.format(target))
+        # utils.fs_link(source, target)
+        package_linkspec = self._read_package_linkspec(source)
 
-        utils.fs_link(source, target)
-        linkspec = self._read_linkspec(source)
+        params['__default__'] = destination
+
+        # package name.
+        name = package_linkspec.get('name', name)
+        if not name:
+            raise ValueError('Missing name for package "%s"'.format(source))
+
+        # target
+        target_spec = package_linkspec.get('target', None)
+        if not target_spec:
+            target = os.path.join(destination, name)
+        else:
+            target = Template(target_spec).render(**params)
+        target = os.path.abspath(target)
+
+        # child packages
+        child_packages = package_linkspec.get('child_packages', None)
+        if not child_packages:
+            utils.fs_link(source, target, hard_link=True, forced=forced)
+        else:
+            for item in child_packages:
+                item_source = os.path.abspath(os.path.join(source, item['source']))
+                item_target = os.path.abspath(Template(item['target']).render(**params))
+                utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
 
     def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
         skipped = info.pop('skipped', False)
         name = info.pop('name', name)
         # source =
 
-    def _read_linkspec(self, source):
-        linkspec = self._read_linkspec_yaml(source)
-        linkspec = self._read_package_linkspec(source) if not linkspec else linkspec
+    def _read_package_linkspec(self, source):
+        """
+        Reads the linkspec if exist in given source folder.
+        :param source: the folder containing linkspec file
+        :return: a linkspec dictionary or empty dictionary.
+        """
+        linkspec = self._read_linkspec_yaml_file(source)
+        linkspec = self._read_package_linkspec_file(source) if not linkspec else linkspec
         linkspec = {} if not linkspec else linkspec
+        return linkspec
 
-        p = 10
-
-    def _read_linkspec_yaml(self, source):
+    def _read_linkspec_yaml_file(self, source):
         import yaml
 
         file = os.path.join(source, 'linkspec.yaml')
@@ -45,7 +79,7 @@ class PackageLinker(object):
             content = fh.read()
             return yaml.load(content)
 
-    def _read_package_linkspec(self, source):
+    def _read_package_linkspec_file(self, source):
         file = os.path.join(source, 'package.linkspec')
         if not os.path.isfile(file):
             return None

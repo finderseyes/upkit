@@ -38,26 +38,32 @@ def fs_unlink(path):
         call('unlink "%s"' % path, shell=True)
 
 
-def fs_link(source, target, hard_link=True):
+def fs_link(source, target, hard_link=True, forced=False):
     """
     
     :param source:
     :param target:
     :param hard_link:
+    :param forced:
     :return:
     """
     source = realpath(source)
     target = os.path.abspath(target)
 
-    is_directory = os.path.isdir(source)
-
-    print('Create filesystem link: "%s" -> "%s"' % (source, target))
+    if not os.path.exists(source):
+        raise ValueError('Path "%s" does not exist.' % source)
 
     if os.path.exists(target):
+        if not forced:
+            raise RuntimeError('Path "%s" exists.' % target)
+
         if is_link(target):
             fs_unlink(target)
         else:
             raise RuntimeError('Folder exists.')
+
+    is_directory = os.path.isdir(source)
+    print('Create filesystem link: "%s" -> "%s"' % (source, target))
 
     if platform == 'cygwin' or platform == 'win32':
         if hard_link:
