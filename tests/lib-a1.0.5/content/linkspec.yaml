@@ -1,0 +1,2 @@
+target: '{{__default__}}/lib-a-selective'
+content: ['data[0-1].txt', 'data2.txt']

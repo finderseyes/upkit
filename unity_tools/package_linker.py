@@ -1,5 +1,8 @@
+import glob
 import os
 import shutil
+
+import npath
 import xmltodict
 from jinja2 import Template
 
@@ -43,7 +46,15 @@ class PackageLinker(object):
         # child packages
         child_packages = package_linkspec.get('child_packages', None)
         if not child_packages:
-            utils.fs_link(source, target, hard_link=True, forced=forced)
+            content = package_linkspec.get('content', None)
+            if not content:
+                utils.fs_link(source, target, hard_link=True, forced=forced)
+            else:
+                content_items = [p for item in content for p in glob.glob(os.path.abspath(os.path.join(source, item)))]
+                for content_item in content_items:
+                    name = ntpath.basename(content_item)
+                    item_target = os.path.abspath(os.join(target, name))
+                    utils.fs_link(content_item, item_target)
         else:
             for item in child_packages:
                 item_source = os.path.abspath(os.path.join(source, item['source']))

@@ -31,6 +31,13 @@ def remove(path):
 
 
 def mkdir_p(path):
+    """
+    mkdir -p
+    from https://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
+
+    :param path:
+    :return:
+    """
     try:
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
