@@ -1,0 +1,4 @@
+target: '{{__default__}}/lib-a-with-external-packages'
+external_packages:
+  - source: '{{resources_package}}'
+    target: resources

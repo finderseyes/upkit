@@ -1,0 +1,7 @@
+child_packages:
+  - source: child
+    target: '{{__default__}}/lib-a-external-child'
+external_packages:
+  - source: '{{resources_package}}'
+    target: child/resources
+    default_content: ['_resources/*.*']

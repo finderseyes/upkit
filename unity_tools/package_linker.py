@@ -23,7 +23,7 @@ class PackageLinker(object):
         :return:
         """
         source = utils.realpath(source)
-        destination = utils.realpath(destination)
+        destination = os.path.abspath(destination)
 
         # utils.fs_link(source, target)
         package_linkspec = self._read_package_linkspec(source)
@@ -70,6 +70,14 @@ class PackageLinker(object):
                         content_item_name = os.path.basename(content_item)
                         content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
+
+        # external packages
+        external_packages = package_linkspec.get('external_packages', None)
+        if external_packages:
+            for item in external_packages:
+                item_source = os.path.abspath(Template(item['source']).render(**params))
+                item_target = os.path.abspath(os.path.join(source, item['target']))
+                utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
 
     def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
         skipped = info.pop('skipped', False)
