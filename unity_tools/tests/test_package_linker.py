@@ -46,5 +46,5 @@ class PackageLinkerTestCase(unittest.TestCase):
                           forced=True)
 
         self.assertTrue(os.path.isfile('../../temp/lib-a-child0/data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child1/data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/a/b/lib-a-child1/data.txt'))
 

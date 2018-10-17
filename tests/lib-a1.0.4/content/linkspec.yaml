@@ -4,4 +4,4 @@ child_packages:
   - source: child0
     target: '{{__default__}}/lib-a-child0'
   - source: child1
-    target: '{{__default__}}/lib-a-child1'
+    target: '{{__default__}}/a/b/lib-a-child1'

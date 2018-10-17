@@ -1,3 +1,4 @@
+import errno
 import os
 import shutil
 from sys import platform
@@ -27,6 +28,16 @@ def remove(path):
         call('cmd /c rm "%s"' % path, shell=True)
     else:
         call('rm "%s"' % path, shell=True)
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 def fs_unlink(path):
@@ -61,6 +72,9 @@ def fs_link(source, target, hard_link=True, forced=False):
             fs_unlink(target)
         else:
             raise RuntimeError('Folder exists.')
+    else:
+        parent_dir = os.path.dirname(target)
+        mkdir_p(parent_dir)
 
     is_directory = os.path.isdir(source)
     print('Create filesystem link: "%s" -> "%s"' % (source, target))
