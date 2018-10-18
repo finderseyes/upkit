@@ -20,7 +20,7 @@ with open('README.md', 'r') as fh:
 setuptools.setup(
     name='unity-tools',
     version='0.1',
-    scripts=['unity-tools'],
+    scripts=['unity-tools.py'],
     author='Vu Le',
     author_email='tuongvu@gmail.com',
     description='Unity3D project utilities',
