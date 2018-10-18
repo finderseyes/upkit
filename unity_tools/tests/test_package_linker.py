@@ -79,3 +79,18 @@ class PackageLinkerTestCase(unittest.TestCase):
 
         self.assertTrue(os.path.isfile('../../temp/lib-a-with-external-packages/data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-with-external-packages/resources/data.txt'))
+
+    def test_link_with_external_packages_default_content_in_linkspec(self):
+        import os
+
+        if os.path.exists('../../tests/empty_resources/default-data.txt'):
+            os.remove('../../tests/empty_resources/default-data.txt')
+
+        self._linker.link(name='lib-a',
+                          source='../../tests/lib-a1.0.8/content',
+                          destination='../../temp',
+                          forced=True,
+                          params=dict(resources_package='../../tests/empty_resources'))
+
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/default-data.txt'))

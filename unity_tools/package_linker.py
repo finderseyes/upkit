@@ -77,6 +77,18 @@ class PackageLinker(object):
                 item_target = os.path.abspath(os.path.join(source, item['target']))
                 utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
 
+                default_content = item.get('default_content', None)
+                if default_content:
+                    content_items = [
+                        p for item in default_content for p in
+                        glob.glob(os.path.abspath(os.path.join(source, item)))
+                    ]
+                    for content_item in content_items:
+                        content_item_name = os.path.basename(content_item)
+                        content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
+                        if not os.path.exists(content_item_target):
+                            utils.copy(content_item, content_item_target)
+
     def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
         skipped = info.pop('skipped', False)
         name = info.pop('name', name)

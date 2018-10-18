@@ -47,6 +47,14 @@ def mkdir_p(path):
             raise
 
 
+def copy(source, target):
+    is_directory = os.path.isdir(source)
+    if is_directory:
+        shutil.copytree(source, target)
+    else:
+        shutil.copy(source, target)
+
+
 def fs_unlink(path):
     is_directory = os.path.isdir(path)
 
