@@ -23,10 +23,6 @@ class PackageLinker(object):
         :param params: command-line parameters.
         """
 
-        config = os.path.abspath(config)
-        packages_config = os.path.abspath(packages_config)
-        packages_folder = os.path.abspath(packages_folder)
-        params_config = os.path.abspath(params_config)
         destination = os.path.abspath(destination)
 
         self._jinja_environment = Environment()

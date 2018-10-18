@@ -1,6 +1,10 @@
 import argparse
+import os
 import sys
 import traceback
+
+from unity_tools import utils
+
 
 class LinkCommand(object):
     def build_argument_parser(self, parser):
@@ -32,6 +36,18 @@ class LinkCommand(object):
 
         try:
             params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])
+
+            if args.config:
+                args.confg = os.path.abspath(args.config)
+
+            if args.packages_config:
+                args.params_config = os.path.abspath(args.params_config)
+
+            if args.packages_folder:
+                args.packages_folder = os.path.abspath(args.packages_folder)
+
+            if args.params_config:
+                args.params_config = os.path.abspath(args.params_config)
 
             linker = PackageLinker(
                 config=args.config,
