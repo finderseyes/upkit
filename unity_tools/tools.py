@@ -2,6 +2,8 @@ import argparse
 import sys
 import traceback
 
+from unity_tools import utils
+
 
 class LinkCommand(object):
     def build_argument_parser(self, parser):
@@ -19,6 +21,9 @@ class LinkCommand(object):
         parser.add_argument('-d', '--destination', dest='destination', required=True,
                             help='Path to destination folder containing target links.')
 
+        parser.add_argument('-p', '--parameter', dest='params', action='append',
+                            help='Parameters.')
+
         # parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,
         #                     help='Path to the directory where Nuget packages are installed')
         # parser.add_argument('-l', '--link-dir', dest='linkDir', required=True,
@@ -29,16 +34,20 @@ class LinkCommand(object):
         from unity_tools.package_linker import PackageLinker
 
         try:
+            params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])
+
             linker = PackageLinker(
                 config=args.config,
                 packages_config=args.packages_config,
                 packages_folder=args.packages_folder,
                 params_config=args.params_config,
                 destination=args.destination,
+                params=params
             )
             linker.run()
+            print('Package link completed.')
         except:
-            print('Package link failed with errors')
+            print('Package link failed with errors.')
             print(traceback.format_exc())
             sys.exit(1)
 
