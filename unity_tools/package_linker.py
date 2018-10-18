@@ -24,7 +24,7 @@ class PackageLinker(object):
         destination = os.path.abspath(destination)
 
         # utils.fs_link(source, target)
-        package_linkspec = self._read_package_linkspec(source)
+        package_linkspec = self.read_package_linkspec(source)
 
         params['__default__'] = destination
 
@@ -89,12 +89,7 @@ class PackageLinker(object):
                         if not os.path.exists(content_item_target):
                             utils.copy(content_item, content_item_target)
 
-    def _link_one_package(self, name=None, source=None, destination=None, info={}, params={}, forced=False):
-        skipped = info.pop('skipped', False)
-        name = info.pop('name', name)
-        # source =
-
-    def _read_package_linkspec(self, source):
+    def read_package_linkspec(self, source):
         """
         Reads the linkspec if exist in given source folder.
         :param source: the folder containing linkspec file
@@ -126,7 +121,42 @@ class PackageLinker(object):
         with open(file, 'r') as fh:
             content = fh.read()
             data = xmltodict.parse(content)
+            transformed_data = {}
 
             #NOTE: transform to new schema here.
-            return data
+            link = data.get('link', None)
+            if not link:
+                raise ValueError('Missing <link> root.')
+
+            if '@name' in link:
+                transformed_data['name'] = link['@name']
+
+            use_child_package_links = link.get('@useChildPackageLinks', '')
+            if use_child_package_links in ['false', 'no', 'False', '']:
+                use_child_package_links = False
+            else:
+                use_child_package_links = True
+
+            if use_child_package_links:
+                def _to_child_package(package_link):
+                    return {
+                        'source': package_link['@package'],
+                        'target': '{{__default__}}/%s' % package_link['@package']
+                    }
+
+                child_package_links = link.get('childPackageLinks')
+                if child_package_links:
+                    transformed_data['child_packages'] = [_to_child_package(l) for l in child_package_links['link']]
+
+            external_package_links = link.get('externalPackageLinks', None)
+            if external_package_links:
+                def _to_external_package(package_link):
+                    return {
+                        'source': '{{%s}}' % package_link['@package'].strip('ref:'),
+                        'target': package_link['@path'],
+                    }
+
+                transformed_data['external_packages'] = [_to_external_package(l) for l in external_package_links['link']]
+
+            return transformed_data
 

@@ -95,3 +95,29 @@ class PackageLinkerTestCase(unittest.TestCase):
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/default-data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/a/data.txt'))
+
+    def test_load_package_linkspec_file(self):
+        package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.0/content')
+
+        self.assertEqual({
+            'name': 'a-package-name',
+            'child_packages': [
+                {'source': 'aaa', 'target': '{{__default__}}/aaa'},
+                {'source': 'bbb', 'target': '{{__default__}}/bbb'},
+            ],
+            'external_packages': [
+                {'source': '{{var_a}}', 'target': 'aaa/Resources'},
+                {'source': '{{var_b}}', 'target': 'bbb/Resources'},
+            ],
+        }, package_linkspec)
+
+    def test_load_package_linkspec_file_not_using_child_packages(self):
+        package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.1/content')
+
+        self.assertEqual({
+            'name': 'a-package-name',
+            'external_packages': [
+                {'source': '{{var_a}}', 'target': 'aaa/Resources'},
+                {'source': '{{var_b}}', 'target': 'bbb/Resources'},
+            ],
+        }, package_linkspec)
