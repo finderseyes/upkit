@@ -2,9 +2,6 @@ import argparse
 import sys
 import traceback
 
-from unity_tools import utils
-
-
 class LinkCommand(object):
     def build_argument_parser(self, parser):
         parser.add_argument('-c', '--config', dest='config',
@@ -62,7 +59,11 @@ class UnityTools(object):
         self._parse_args()
 
     def _parse_args(self):
+
+        from . import __version__
+
         parser = argparse.ArgumentParser(description='Unity3D project utilities.')
+        parser.add_argument('-v', '--version', action='version', version='Unity tools %s' % __version__)
         subparsers = parser.add_subparsers(help='sub-command help')
 
         for k, v in self._commands.items():
