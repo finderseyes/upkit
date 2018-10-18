@@ -1,8 +1,6 @@
 import glob
 import os
-import shutil
 
-import npath
 import xmltodict
 from jinja2 import Template
 
