@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<link name="a-package-name" useChildPackageLinks="false">
+	<childPackageLinks>
+		<link package="aaa"/>
+		<link package="bbb"/>
+	</childPackageLinks>
+
+	<externalPackageLinks>
+		<link package='ref:var_a' path='aaa/Resources'/>
+		<link package='ref:var_b' path='bbb/Resources'/>
+	</externalPackageLinks>
+</link>
