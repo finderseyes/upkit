@@ -22,10 +22,17 @@ class PackageLinker(object):
         :param destination: the default link destination folder
         :param params: command-line parameters.
         """
+
+        config = os.path.abspath(config)
+        packages_config = os.path.abspath(packages_config)
+        packages_folder = os.path.abspath(packages_folder)
+        params_config = os.path.abspath(params_config)
+        destination = os.path.abspath(destination)
+
         self._jinja_environment = Environment()
-        self._destination = os.path.abspath(destination)
+        self._destination = destination
         self._params = {
-            '__default__': os.path.abspath(destination),
+            '__default__': destination,
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 

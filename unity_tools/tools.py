@@ -1,19 +1,46 @@
 import argparse
 import sys
+import traceback
 
 
 class LinkCommand(object):
     def build_argument_parser(self, parser):
-        parser.add_argument('-c', '--config', dest='config', required=True,
-                            help='Path to the Nuget package .config file')
-        parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,
-                            help='Path to the directory where Nuget packages are installed')
-        parser.add_argument('-l', '--link-dir', dest='linkDir', required=True,
-                            help='Path to the directory where links to Nuget packages are created')
-        parser.add_argument('-r', '--params', dest='params', required=False, help='Path to XML parameter file')
+        parser.add_argument('-c', '--config', dest='config',
+                            help='Path to link configuration file (config.yaml)')
 
-    def run(self):
-        pass
+        parser.add_argument('--packages-config', dest='packages_config',
+                            help='Path to Nuget packages.config file')
+        parser.add_argument('--packages-folder', dest='packages_folder',
+                            help='Path to folder containg Nuget packages')
+
+        parser.add_argument('--params-config', dest='params_config',
+                            help='Path to link parameter file (params.yml)')
+
+        parser.add_argument('-d', '--destination', dest='destination', required=True,
+                            help='Path to destination folder containing target links.')
+
+        # parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,
+        #                     help='Path to the directory where Nuget packages are installed')
+        # parser.add_argument('-l', '--link-dir', dest='linkDir', required=True,
+        #                     help='Path to the directory where links to Nuget packages are created')
+        # parser.add_argument('-r', '--params', dest='params', required=False, help='Path to XML parameter file')
+
+    def run(self, args):
+        from unity_tools.package_linker import PackageLinker
+
+        try:
+            linker = PackageLinker(
+                config=args.config,
+                packages_config=args.packages_config,
+                packages_folder=args.packages_folder,
+                params_config=args.params_config,
+                destination=args.destination,
+            )
+            linker.run()
+        except:
+            print('Package link failed with errors')
+            print(traceback.format_exc())
+            sys.exit(1)
 
 
 class UnityTools(object):
@@ -32,9 +59,8 @@ class UnityTools(object):
         for k, v in self._commands.items():
             command_parser = subparsers.add_parser(k, help='Help for command %s'.format(k))
             v.build_argument_parser(command_parser)
+            command_parser.set_defaults(func=lambda a: v.run(a))
 
-        parser.parse_args()
-
-        command = self._commands[parser.command]
-        k = 10
+        args = parser.parse_args()
+        args.func(args)
 
