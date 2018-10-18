@@ -10,5 +10,5 @@ links:
           target: '{{__default__}}/lib-a-external-aaa'
       external_packages:
         - source: '{{resources_package}}'
-          target: child/resources
+          target: aaa/resources
           default_content: ['_resources/*']

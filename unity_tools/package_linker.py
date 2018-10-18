@@ -55,13 +55,15 @@ class PackageLinker(object):
                 def _to_link(i, dest):
                     name = i.get('name')
                     source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    package_linkspec = i.get('linkspec', None)
                     destination_spec = i.get('destination', dest)
                     dest = os.path.abspath(self._render_template(destination_spec, self._params))
 
                     return {
                         'name': name,
                         'source': source,
-                        'destination': dest
+                        'destination': dest,
+                        'package_linkspec': package_linkspec,
                     }
 
                 self._links = [_to_link(item, destination) for item in links_data]
@@ -113,7 +115,11 @@ class PackageLinker(object):
 
     def run(self):
         for link in self._links:
-            self.link(source=link['source'], destination=link['destination'], name=link['name'], forced=True,
+            self.link(source=link['source'],
+                      destination=link['destination'],
+                      name=link['name'],
+                      package_linkspec=link['package_linkspec'],
+                      forced=True,
                       params=self._params)
 
     def link(self, source=None, destination=None, forced=False, name=None, package_linkspec=None, params={}):
