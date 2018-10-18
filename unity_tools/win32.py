@@ -98,7 +98,7 @@ class REPARSE_DATA_BUFFER(ctypes.Structure):
     _anonymous_ = ('ReparseData',)
 
 
-def islink(path):
+def is_junction(path):
     data = wintypes.WIN32_FIND_DATAW()
     kernel32.FindClose(kernel32.FindFirstFileW(path, ctypes.byref(data)))
     if not data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT:

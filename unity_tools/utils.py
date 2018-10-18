@@ -18,7 +18,7 @@ def realpath(path):
 def is_link(path):
     if platform == 'cygwin' or platform == 'win32':
         import win32
-        return win32.islink(path)
+        return os.path.islink(path) or win32.is_junction(path)
     else:
         return os.path.islink(path)
 
@@ -48,12 +48,15 @@ def mkdir_p(path):
 
 
 def fs_unlink(path):
+    is_directory = os.path.isdir(path)
+
     if platform == 'cygwin' or platform == 'win32':
-        call('cmd /c rm "%s"' % path, shell=True)
-    if platform == 'darwin':
-        call('sh -c "hln -u \"%s\""' % path, shell=True)
+        if is_directory:
+            call('cmd /c rmdir /Q "%s"' % path, shell=True)
+        else:
+            call('cmd /c del /Q "%s"' % path, shell=True)
     else:
-        call('unlink "%s"' % path, shell=True)
+        call('rm "%s"' % path, shell=True)
 
 
 def fs_link(source, target, hard_link=True, forced=False):
@@ -78,7 +81,7 @@ def fs_link(source, target, hard_link=True, forced=False):
         if is_link(target):
             fs_unlink(target)
         else:
-            raise RuntimeError('Folder exists.')
+            raise RuntimeError('Path "%s" exists, but is not a link.' % target)
     else:
         parent_dir = os.path.dirname(target)
         mkdir_p(parent_dir)
@@ -87,27 +90,14 @@ def fs_link(source, target, hard_link=True, forced=False):
     print('Create filesystem link: "%s" -> "%s"' % (source, target))
 
     if platform == 'cygwin' or platform == 'win32':
-        if hard_link:
-            if is_directory:
+        if not is_directory:
+            call('cmd /C mklink "%s" "%s"' % (target, source), shell=True)
+        else:
+            if hard_link:
                 call('cmd /C mklink /J "%s" "%s"' % (target, source), shell=True)
             else:
-                call('cmd /C mklink /H "%s" "%s"' % (target, source), shell=True)
-        else:
-            if is_directory:
                 call('cmd /C mklink /D "%s" "%s"' % (target, source), shell=True)
-            else:
-                call('cmd /C mklink "%s" "%s"' % (target, source), shell=True)
 
     else:
         call('ln -s "%s" "%s"' % (source, target), shell=True)
-    # elif platform == 'darwin':
-    #     if hard_link:
-    #         call('sh -c "hln %s %s"' % (source, target), shell=True)
-    #     else:
-    #         call('ln -s "%s" "%s"' % (source, target), shell=True)
-    # else:
-    #     if hard_link:
-    #         call('ln "%s" "%s"' % (source, target), shell=True)
-    #     else:
-    #         call('ln -s "%s" "%s"' % (source, target), shell=True)
 
