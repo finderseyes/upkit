@@ -41,7 +41,7 @@ class LinkCommand(object):
                 args.confg = os.path.abspath(args.config)
 
             if args.packages_config:
-                args.params_config = os.path.abspath(args.params_config)
+                args.packages_config = os.path.abspath(args.packages_config)
 
             if args.packages_folder:
                 args.packages_folder = os.path.abspath(args.packages_folder)
