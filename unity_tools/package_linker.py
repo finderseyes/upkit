@@ -1,8 +1,9 @@
 import glob
 import os
 import yaml
+import yamlordereddictloader
 import xmltodict
-from jinja2 import Template, Environment, meta
+from jinja2 import Template, Environment, meta, TemplateSyntaxError
 
 from unity_tools import utils
 
@@ -40,7 +41,7 @@ class PackageLinker(object):
             with open(config, 'r') as fh:
                 content = fh.read()
 
-                config_data = yaml.load(content)
+                config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
 
                 # parameters
                 params_data = config_data.get('params', {})
@@ -72,7 +73,7 @@ class PackageLinker(object):
                 self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
                 with open(params_config, 'r') as fh:
                     content = fh.read()
-                    params_data = yaml.load(content)
+                    params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
                     self._expand_params(params_data)
 
             # override params
@@ -104,15 +105,19 @@ class PackageLinker(object):
 
     def _expand_params(self, params_data):
         for k, item in params_data.items():
-            self._params[k] = os.path.abspath(self._render_template(item, self._params))
+            self._params[k] = self._render_template(item, self._params)
 
     def _render_template(self, template, params={}):
-        ast = self._jinja_environment.parse(template)
-        variables = meta.find_undeclared_variables(ast)
-        for v in variables:
-            if v not in params:
-                raise ValueError('Unknown parameter "%s"' % v)
-        return Template(template).render(**params)
+        try:
+            ast = self._jinja_environment.parse(template)
+            variables = meta.find_undeclared_variables(ast)
+            for v in variables:
+                if v not in params:
+                    raise ValueError('Unknown parameter "%s"' % v)
+            return Template(template).render(**params)
+
+        except TemplateSyntaxError as err:
+            raise ValueError('Syntax error at "%s", error: %s' % (template, str(err)))
 
     def run(self):
         for link in self._links:
@@ -223,7 +228,7 @@ class PackageLinker(object):
 
         with open(file, 'r') as fh:
             content = fh.read()
-            return yaml.load(content)
+            return yaml.load(content, Loader=yamlordereddictloader.Loader)
 
     def _read_package_linkspec_file(self, source):
         file = os.path.join(source, 'package.linkspec')
