@@ -94,3 +94,4 @@ class PackageLinkerTestCase(unittest.TestCase):
 
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/default-data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/a/data.txt'))

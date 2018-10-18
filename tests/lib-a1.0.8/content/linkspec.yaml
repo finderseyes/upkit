@@ -4,4 +4,4 @@ child_packages:
 external_packages:
   - source: '{{resources_package}}'
     target: child/resources
-    default_content: ['_resources/*.*']
+    default_content: ['_resources/*']
