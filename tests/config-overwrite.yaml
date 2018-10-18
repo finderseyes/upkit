@@ -1,0 +1,14 @@
+params:
+  resources_package: '{{__dir__}}/empty_resources'
+links:
+  - name: lib-a
+    source: '{{__dir__}}/lib-a1.0.8/content'
+    # overwrite the linkspec in the package.
+    linkspec:
+      child_packages:
+        - source: aaa
+          target: '{{__default__}}/lib-a-external-aaa'
+      external_packages:
+        - source: '{{resources_package}}'
+          target: child/resources
+          default_content: ['_resources/*']

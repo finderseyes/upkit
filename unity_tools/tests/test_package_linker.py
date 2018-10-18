@@ -1,5 +1,8 @@
 import os
 import unittest
+
+import yaml
+
 from unity_tools.package_linker import PackageLinker
 
 
@@ -95,6 +98,34 @@ class PackageLinkerTestCase(unittest.TestCase):
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/default-data.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/a/data.txt'))
+
+    def test_overwrite_linkspec(self):
+        import os
+
+        content = """
+child_packages:
+- source: aaa
+  target: '{{__default__}}/lib-a-external-aaa'
+external_packages:
+- source: '{{resources_package}}'
+  target: aaa/resources
+  default_content: ['_resources/*']
+"""
+        package_linkspec = yaml.load(content)
+
+        if os.path.exists('../../tests/empty_resources/default-data.txt'):
+            os.remove('../../tests/empty_resources/default-data.txt')
+
+        self._linker.link(name='lib-a',
+                          source='../../tests/lib-a1.0.8/content',
+                          destination='../../temp',
+                          forced=True,
+                          package_linkspec=package_linkspec,
+                          params=dict(resources_package='../../tests/empty_resources'))
+
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/default-data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/a/data.txt'))
 
     def test_load_package_linkspec_file(self):
         package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.0/content')

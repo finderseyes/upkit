@@ -116,20 +116,22 @@ class PackageLinker(object):
             self.link(source=link['source'], destination=link['destination'], name=link['name'], forced=True,
                       params=self._params)
 
-    def link(self, source=None, destination=None, forced=False, name=None, params={}):
+    def link(self, source=None, destination=None, forced=False, name=None, package_linkspec=None, params={}):
         """
         Link a source folder to a sub-folder in destination folder using given name.
         :param source:
         :param destination:
         :param forced:
         :param name:
+        :param package_linkspec:
         :return:
         """
         source = utils.realpath(source)
         destination = os.path.abspath(destination)
 
         # utils.fs_link(source, target)
-        package_linkspec = self.read_package_linkspec(source)
+        if not package_linkspec:
+            package_linkspec = self.read_package_linkspec(source)
 
         params['__default__'] = destination
 
