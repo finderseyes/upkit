@@ -134,7 +134,9 @@ class PackageLinkerTestCase(unittest.TestCase):
         linker = PackageLinker(
             packages_config='../../tests/packages.config',
             packages_folder='../../tests',
-            destination='../../temp/from-packages-config')
+            destination='../../temp/from-packages-config',
+            params=dict(resources_package='../../tests/empty_resources')
+        )
         linker.run()
 
         self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
