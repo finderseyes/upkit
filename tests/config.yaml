@@ -1,5 +1,5 @@
 params:
-  resources_package: '{{__dir__}}/resources'
+  resources_package: '{{__dir__}}/empty_resources'
 links:
   - name: lib-a
     source: '{{__dir__}}/lib-a1.0.8/content'

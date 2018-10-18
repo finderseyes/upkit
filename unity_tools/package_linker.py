@@ -2,7 +2,7 @@ import glob
 import os
 import yaml
 import xmltodict
-from jinja2 import Template
+from jinja2 import Template, Environment, meta
 
 from unity_tools import utils
 
@@ -22,7 +22,7 @@ class PackageLinker(object):
         :param destination: the default link destination folder
         :param params: command-line parameters.
         """
-
+        self._jinja_environment = Environment()
         self._destination = os.path.abspath(destination)
         self._params = {
             '__default__': os.path.abspath(destination),
@@ -49,9 +49,9 @@ class PackageLinker(object):
 
                 def _to_link(i, dest):
                     name = i.get('name')
-                    source = os.path.abspath(Template(i.get('source')).render(**self._params))
+                    source = os.path.abspath(self._render_template(i.get('source'), self._params))
                     destination_spec = i.get('destination', dest)
-                    dest = os.path.abspath(Template(destination_spec).render(**self._params))
+                    dest = os.path.abspath(self._render_template(destination_spec, self._params))
 
                     return {
                         'name': name,
@@ -96,7 +96,15 @@ class PackageLinker(object):
 
     def _expand_params(self, params_data):
         for k, item in params_data.items():
-            self._params[k] = os.path.abspath(Template(item).render(**self._params))
+            self._params[k] = os.path.abspath(self._render_template(item, self._params))
+
+    def _render_template(self, template, params={}):
+        ast = self._jinja_environment.parse(template)
+        variables = meta.find_undeclared_variables(ast)
+        for v in variables:
+            if v not in params:
+                raise ValueError('Unknown parameter "%s"' % v)
+        return Template(template).render(**params)
 
     def run(self):
         for link in self._links:
@@ -130,7 +138,7 @@ class PackageLinker(object):
         if not target_spec:
             target = os.path.join(destination, name)
         else:
-            target = Template(target_spec).render(**params)
+            target = self._render_template(target_spec, params)
         target = os.path.abspath(target)
 
         # child packages
@@ -148,7 +156,7 @@ class PackageLinker(object):
         else:
             for item in child_packages:
                 item_source = os.path.abspath(os.path.join(source, item['source']))
-                item_target = os.path.abspath(Template(item['target']).render(**params))
+                item_target = os.path.abspath(self._render_template(item['target'], params))
 
                 content = package_linkspec.get('content', None)
                 if not content:
@@ -165,7 +173,7 @@ class PackageLinker(object):
         external_packages = package_linkspec.get('external_packages', None)
         if external_packages:
             for item in external_packages:
-                item_source = os.path.abspath(Template(item['source']).render(**params))
+                item_source = os.path.abspath(self._render_template(item['source'], params))
                 item_target = os.path.abspath(os.path.join(source, item['target']))
                 utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
 

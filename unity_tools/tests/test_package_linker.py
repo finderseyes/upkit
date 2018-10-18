@@ -140,3 +140,14 @@ class PackageLinkerTestCase(unittest.TestCase):
         self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
         self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
         self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))
+
+    # def test_not_run_if_missing_parameters(self):
+    #     linker = PackageLinker(
+    #         packages_config='../../tests/packages.config',
+    #         packages_folder='../../tests',
+    #         destination='../../temp/from-packages-config')
+    #     linker.run()
+    #
+    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
+    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
+    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))
