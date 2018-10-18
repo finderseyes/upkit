@@ -5,6 +5,15 @@ from sys import platform
 from subprocess import call, check_output
 
 
+def guaranteed_list(x):
+    if not x:
+        return []
+    elif isinstance(x, list):
+        return x
+    else:
+        return [x]
+
+
 def realpath(path):
     """
     Converts to real, canonical path.

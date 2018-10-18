@@ -121,3 +121,22 @@ class PackageLinkerTestCase(unittest.TestCase):
                 {'source': '{{var_b}}', 'target': 'bbb/Resources'},
             ],
         }, package_linkspec)
+
+    def test_run_from_config(self):
+        linker = PackageLinker(config='../../tests/config.yaml', destination='../../temp/from-config')
+        linker.run()
+
+        self.assertTrue(os.path.isfile('../../temp/from-config/lib-a-external-child/data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/from-config/lib-a-external-child/resources/default-data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/from-config/lib-a-external-child/resources/a/data.txt'))
+
+    def test_run_from_packages_config(self):
+        linker = PackageLinker(
+            packages_config='../../tests/packages.config',
+            packages_folder='../../tests',
+            destination='../../temp/from-packages-config')
+        linker.run()
+
+        self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
+        self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))

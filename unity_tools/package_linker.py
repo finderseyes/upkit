@@ -1,6 +1,6 @@
 import glob
 import os
-
+import yaml
 import xmltodict
 from jinja2 import Template
 
@@ -8,8 +8,100 @@ from unity_tools import utils
 
 
 class PackageLinker(object):
-    def __init__(self):
-        pass
+    def __init__(self, config=None,
+                 packages_config=None,
+                 packages_folder=None,
+                 params_config=None,
+                 destination=None,
+                 params={}):
+        """
+
+        :param config: the config file, will override packages_config and params_config
+        :param packages_config: Nuget packages.config file
+        :param params_config: yaml file containing parameter definitions
+        :param destination: the default link destination folder
+        :param params: command-line parameters.
+        """
+
+        self._destination = os.path.abspath(destination)
+        self._params = {
+            '__default__': os.path.abspath(destination),
+            '__cwd__': os.path.abspath(os.getcwd()),
+        }
+
+        if config:
+            self._params['__dir__'] = os.path.abspath(os.path.dirname(config))
+
+            with open(config, 'r') as fh:
+                content = fh.read()
+
+                config_data = yaml.load(content)
+
+                # parameters
+                params_data = config_data.get('params', {})
+                self._expand_params(params_data)
+
+                # override params
+                self._params.update(params)
+
+                # links
+                links_data = config_data.get('links', {})
+
+                def _to_link(i, dest):
+                    name = i.get('name')
+                    source = os.path.abspath(Template(i.get('source')).render(**self._params))
+                    destination_spec = i.get('destination', dest)
+                    dest = os.path.abspath(Template(destination_spec).render(**self._params))
+
+                    return {
+                        'name': name,
+                        'source': source,
+                        'destination': dest
+                    }
+
+                self._links = [_to_link(item, destination) for item in links_data]
+        else:
+            if params_config:
+                self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
+                with open(params_config, 'r') as fh:
+                    content = fh.read()
+                    params_data = yaml.load(content)
+                    self._expand_params(params_data)
+
+            # override params
+            self._params.update(params)
+
+            # packages
+            if packages_config:
+                if not packages_folder:
+                    raise ValueError('Missing parameter "packages_folder".')
+
+                self._params['__dir__'] = os.path.abspath(os.path.dirname(packages_config))
+                with open(packages_config, 'r') as fh:
+                    content = fh.read()
+                    packages_data = xmltodict.parse(content)
+
+                    def _to_link(i, pkg_folder, dest):
+                        name = '%s%s' % (i.get('@id'), i.get('@version'))
+                        source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
+
+                        return {
+                            'name': name,
+                            'source': source,
+                            'destination': dest
+                        }
+
+                    self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
+                                   for item in utils.guaranteed_list(packages_data['packages']['package'])]
+
+    def _expand_params(self, params_data):
+        for k, item in params_data.items():
+            self._params[k] = os.path.abspath(Template(item).render(**self._params))
+
+    def run(self):
+        for link in self._links:
+            self.link(source=link['source'], destination=link['destination'], name=link['name'], forced=True,
+                      params=self._params)
 
     def link(self, source=None, destination=None, forced=False, name=None, params={}):
         """
@@ -101,8 +193,6 @@ class PackageLinker(object):
         return linkspec
 
     def _read_linkspec_yaml_file(self, source):
-        import yaml
-
         file = os.path.join(source, 'linkspec.yaml')
         if not os.path.isfile(file):
             file = os.path.join(source, 'linkspec.yml')
@@ -146,7 +236,8 @@ class PackageLinker(object):
 
                 child_package_links = link.get('childPackageLinks')
                 if child_package_links:
-                    transformed_data['child_packages'] = [_to_child_package(l) for l in child_package_links['link']]
+                    transformed_data['child_packages'] = [
+                        _to_child_package(l) for l in utils.guaranteed_list(child_package_links['link'])]
 
             external_package_links = link.get('externalPackageLinks', None)
             if external_package_links:
@@ -156,7 +247,8 @@ class PackageLinker(object):
                         'target': package_link['@path'],
                     }
 
-                transformed_data['external_packages'] = [_to_external_package(l) for l in external_package_links['link']]
+                transformed_data['external_packages'] = [
+                    _to_external_package(l) for l in utils.guaranteed_list(external_package_links['link'])]
 
             return transformed_data
 
