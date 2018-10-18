@@ -6,7 +6,7 @@ import traceback
 from unity_tools import utils
 
 
-class LinkCommand(object):
+class LinkPackageCommand(object):
     def build_argument_parser(self, parser):
         parser.add_argument('-c', '--config', dest='config',
                             help='Path to link configuration file (config.yaml)')
@@ -68,7 +68,7 @@ class LinkCommand(object):
 class UnityTools(object):
     def __init__(self):
         self._commands = {
-            'link': LinkCommand(),
+            'link-package': LinkPackageCommand(),
         }
 
     def run(self):
