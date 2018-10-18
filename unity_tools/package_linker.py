@@ -95,7 +95,8 @@ class PackageLinker(object):
                         return {
                             'name': name,
                             'source': source,
-                            'destination': dest
+                            'destination': dest,
+                            'package_linkspec': None,
                         }
 
                     self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
