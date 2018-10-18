@@ -1,0 +1,15 @@
+params:
+  project_name: appkit-windows
+  project: '{{__dir__}}/{{project_name}}'
+  project_settings: appkit-settings
+  assets: '{{project}}/Assets'
+  plugins: '{{assets}}/Plugins'
+  dependencies: '{{__dir__}}/dependencies'
+
+links:
+  - name: 'packages'
+    source: '{{__dir__}}/project-packages'
+    linkspec:
+      child_packages:
+        - source: 'Scripts'
+          target: '{{assets}}/Scripts'

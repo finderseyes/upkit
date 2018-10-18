@@ -8,5 +8,6 @@
 	<externalPackageLinks>
 		<link package='ref:var_a' path='aaa/Resources'/>
 		<link package='ref:var_b' path='bbb/Resources'/>
+		<link package='ref:c.d.e' path='ccc/Resources'/>
 	</externalPackageLinks>
 </link>

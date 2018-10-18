@@ -3,4 +3,4 @@ content: ['data[0-1].txt', 'data2.txt']
 child_packages:
   - source: child
     target: '{{__default__}}/lib-a-child-content'
-    content: ['data[0-1].txt', 'data2.txt']
+    content: ['data[0-3].txt']

@@ -1,8 +1,9 @@
 import glob
 import os
 import yaml
+import yamlordereddictloader
 import xmltodict
-from jinja2 import Template, Environment, meta
+from jinja2 import Template, Environment, meta, TemplateSyntaxError
 
 from unity_tools import utils
 
@@ -40,7 +41,7 @@ class PackageLinker(object):
             with open(config, 'r') as fh:
                 content = fh.read()
 
-                config_data = yaml.load(content)
+                config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
 
                 # parameters
                 params_data = config_data.get('params', {})
@@ -55,13 +56,15 @@ class PackageLinker(object):
                 def _to_link(i, dest):
                     name = i.get('name')
                     source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    package_linkspec = i.get('linkspec', None)
                     destination_spec = i.get('destination', dest)
                     dest = os.path.abspath(self._render_template(destination_spec, self._params))
 
                     return {
                         'name': name,
                         'source': source,
-                        'destination': dest
+                        'destination': dest,
+                        'package_linkspec': package_linkspec,
                     }
 
                 self._links = [_to_link(item, destination) for item in links_data]
@@ -70,7 +73,7 @@ class PackageLinker(object):
                 self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
                 with open(params_config, 'r') as fh:
                     content = fh.read()
-                    params_data = yaml.load(content)
+                    params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
                     self._expand_params(params_data)
 
             # override params
@@ -87,13 +90,14 @@ class PackageLinker(object):
                     packages_data = xmltodict.parse(content)
 
                     def _to_link(i, pkg_folder, dest):
-                        name = '%s%s' % (i.get('@id'), i.get('@version'))
+                        name = '%s.%s' % (i.get('@id'), i.get('@version'))
                         source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
 
                         return {
                             'name': name,
                             'source': source,
-                            'destination': dest
+                            'destination': dest,
+                            'package_linkspec': None,
                         }
 
                     self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
@@ -101,35 +105,45 @@ class PackageLinker(object):
 
     def _expand_params(self, params_data):
         for k, item in params_data.items():
-            self._params[k] = os.path.abspath(self._render_template(item, self._params))
+            self._params[k] = self._render_template(item, self._params)
 
     def _render_template(self, template, params={}):
-        ast = self._jinja_environment.parse(template)
-        variables = meta.find_undeclared_variables(ast)
-        for v in variables:
-            if v not in params:
-                raise ValueError('Unknown parameter "%s"' % v)
-        return Template(template).render(**params)
+        try:
+            ast = self._jinja_environment.parse(template)
+            variables = meta.find_undeclared_variables(ast)
+            for v in variables:
+                if v not in params:
+                    raise ValueError('Unknown parameter "%s"' % v)
+            return Template(template).render(**params)
+
+        except TemplateSyntaxError as err:
+            raise ValueError('Syntax error at "%s", error: %s' % (template, str(err)))
 
     def run(self):
         for link in self._links:
-            self.link(source=link['source'], destination=link['destination'], name=link['name'], forced=True,
+            self.link(source=link['source'],
+                      destination=link['destination'],
+                      name=link['name'],
+                      package_linkspec=link['package_linkspec'],
+                      forced=True,
                       params=self._params)
 
-    def link(self, source=None, destination=None, forced=False, name=None, params={}):
+    def link(self, source=None, destination=None, forced=False, name=None, package_linkspec=None, params={}):
         """
         Link a source folder to a sub-folder in destination folder using given name.
         :param source:
         :param destination:
         :param forced:
         :param name:
+        :param package_linkspec:
         :return:
         """
         source = utils.realpath(source)
         destination = os.path.abspath(destination)
 
         # utils.fs_link(source, target)
-        package_linkspec = self.read_package_linkspec(source)
+        if not package_linkspec:
+            package_linkspec = self.read_package_linkspec(source)
 
         params['__default__'] = destination
 
@@ -163,7 +177,7 @@ class PackageLinker(object):
                 item_source = os.path.abspath(os.path.join(source, item['source']))
                 item_target = os.path.abspath(self._render_template(item['target'], params))
 
-                content = package_linkspec.get('content', None)
+                content = item.get('content', None)
                 if not content:
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
@@ -214,7 +228,7 @@ class PackageLinker(object):
 
         with open(file, 'r') as fh:
             content = fh.read()
-            return yaml.load(content)
+            return yaml.load(content, Loader=yamlordereddictloader.Loader)
 
     def _read_package_linkspec_file(self, source):
         file = os.path.join(source, 'package.linkspec')
@@ -256,7 +270,7 @@ class PackageLinker(object):
             if external_package_links:
                 def _to_external_package(package_link):
                     return {
-                        'source': '{{%s}}' % package_link['@package'].strip('ref:'),
+                        'source': '{{%s}}' % package_link['@package'].replace('ref:', '').replace('.', '_'),
                         'target': package_link['@path'],
                     }
 
