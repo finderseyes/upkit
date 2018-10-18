@@ -89,7 +89,7 @@ class PackageLinker(object):
                     packages_data = xmltodict.parse(content)
 
                     def _to_link(i, pkg_folder, dest):
-                        name = '%s%s' % (i.get('@id'), i.get('@version'))
+                        name = '%s.%s' % (i.get('@id'), i.get('@version'))
                         source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
 
                         return {
