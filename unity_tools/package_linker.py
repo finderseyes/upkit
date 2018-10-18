@@ -22,6 +22,8 @@ class PackageLinker(object):
         :param destination: the default link destination folder
         :param params: command-line parameters.
         """
+        if not destination:
+            raise ValueError('Missing required parameter "destination"')
 
         destination = os.path.abspath(destination)
 

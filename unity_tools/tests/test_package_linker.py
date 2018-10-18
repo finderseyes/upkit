@@ -5,7 +5,7 @@ from unity_tools.package_linker import PackageLinker
 
 class PackageLinkerTestCase(unittest.TestCase):
     def setUp(self):
-        self._linker = PackageLinker()
+        self._linker = PackageLinker(destination='../../temp',)
 
     def test_link_without_linkspec(self):
         self._linker.link(name='lib-a',
