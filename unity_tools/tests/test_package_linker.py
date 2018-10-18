@@ -71,6 +71,7 @@ class PackageLinkerTestCase(unittest.TestCase):
         self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data0.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data1.txt'))
         self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data2.txt'))
+        self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data3.txt'))
         self.assertFalse(os.path.isfile('../../temp/lib-a-child-content/data.txt'))
 
     def test_link_with_external_packages_in_linkspec(self):

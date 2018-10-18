@@ -172,7 +172,7 @@ class PackageLinker(object):
                 item_source = os.path.abspath(os.path.join(source, item['source']))
                 item_target = os.path.abspath(self._render_template(item['target'], params))
 
-                content = package_linkspec.get('content', None)
+                content = item.get('content', None)
                 if not content:
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
