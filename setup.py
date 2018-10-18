@@ -21,6 +21,11 @@ setuptools.setup(
     name='unity-tools',
     version='0.1',
     scripts=['unity-tools.py'],
+    entry_points={
+        'console_scripts': [
+            'unity-tools = unity_tools.tools:execute_from_command_line',
+        ],
+    },
     author='Vu Le',
     author_email='tuongvu@gmail.com',
     description='Unity3D project utilities',

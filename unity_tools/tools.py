@@ -90,3 +90,9 @@ class UnityTools(object):
         args = parser.parse_args()
         args.func(args)
 
+
+def execute_from_command_line():
+    tools = UnityTools()
+    tools.run()
+
+
