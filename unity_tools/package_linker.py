@@ -256,7 +256,7 @@ class PackageLinker(object):
             if external_package_links:
                 def _to_external_package(package_link):
                     return {
-                        'source': '{{%s}}' % package_link['@package'].strip('ref:'),
+                        'source': '{{%s}}' % package_link['@package'].replace('ref:', '').replace('.', '_'),
                         'target': package_link['@path'],
                     }
 

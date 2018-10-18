@@ -108,6 +108,7 @@ class PackageLinkerTestCase(unittest.TestCase):
             'external_packages': [
                 {'source': '{{var_a}}', 'target': 'aaa/Resources'},
                 {'source': '{{var_b}}', 'target': 'bbb/Resources'},
+                {'source': '{{c_d_e}}', 'target': 'ccc/Resources'},
             ],
         }, package_linkspec)
 
@@ -119,6 +120,7 @@ class PackageLinkerTestCase(unittest.TestCase):
             'external_packages': [
                 {'source': '{{var_a}}', 'target': 'aaa/Resources'},
                 {'source': '{{var_b}}', 'target': 'bbb/Resources'},
+                {'source': '{{c_d_e}}', 'target': 'ccc/Resources'},
             ],
         }, package_linkspec)
 
