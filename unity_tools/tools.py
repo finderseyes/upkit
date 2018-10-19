@@ -19,10 +19,10 @@ class LinkPackageCommand(object):
         parser.add_argument('--params-config', dest='params_config',
                             help='Path to link parameter file (params.yml)')
 
-        parser.add_argument('-d', '--destination', dest='destination', required=True,
-                            help='Path to destination folder containing target links.')
+        # parser.add_argument('-d', '--destination', dest='destination', required=True,
+        #                     help='Path to destination folder containing target links.')
 
-        parser.add_argument('-p', '--parameter', dest='params', action='append',
+        parser.add_argument('-v', dest='params', action='append',
                             help='Parameters.')
 
         # parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,

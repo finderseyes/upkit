@@ -1,0 +1,7 @@
+links:
+  - source: '{{__dir__}}/child'
+    target: '{{__target__}}/child'
+external_links:
+  - source: '{{resources_package}}'
+    target: '{{__dir__}}/child/resources'
+    default_content: ['{{__dir__}}/_resources/*']

@@ -1,0 +1,3 @@
+links:
+  - source: '{{__dir__}}/child0'
+    target: '{{__target__}}/lib-a-child0'

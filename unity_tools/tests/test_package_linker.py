@@ -3,130 +3,157 @@ import unittest
 
 import yaml
 
+from unity_tools import utils
 from unity_tools.package_linker import PackageLinker
 
 
 class PackageLinkerTestCase(unittest.TestCase):
-    def setUp(self):
-        self._linker = PackageLinker(destination='../../temp',)
-
     def test_link_without_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.0/content',
-                          destination='../../temp',
-                          forced=True)
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a/data.txt'))
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.0/content', target=output, forced=True)
+
+        self.assertTrue(os.path.isfile('%s/data.txt' % output))
 
     def test_link_with_empty_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.1/content',
-                          destination='../../temp',
-                          forced=True)
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a/data.txt'))
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a1.0.1/content', target=output, forced=True)
 
-    def test_link_with_name_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.2/content',
-                          destination='../../temp',
-                          forced=True)
+        self.assertTrue(os.path.isfile('%s/data.txt' % output))
 
-        self.assertTrue(os.path.isfile('../../temp/lib-abc/data.txt'))
+    def test_link_with_one_child_link_in_linkspec(self):
+        output = '../../temp/output'
+        utils.rmdir(output)
 
-    def test_link_with_target_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.3/content',
-                          destination='../../temp',
-                          forced=True)
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.2/content',
+                    target=os.path.join(output, 'lib-a'),
+                    forced=True)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-abcdef/data.txt'))
+        self.assertTrue(os.path.isfile('%s/lib-a-child0/data.txt' % output))
 
-    def test_link_with_child_packages_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.4/content',
-                          destination='../../temp',
-                          forced=True)
+    def test_link_with_empty_child_links_in_linkspec(self):
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child0/data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/a/b/lib-a-child1/data.txt'))
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.3/content', target=output, forced=True)
+
+        self.assertTrue(os.path.isfile('%s/data.txt' % output))
+
+    def test_link_with_two_child_links_in_linkspec(self):
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
+
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.4/content', target=output, forced=True)
+
+        self.assertTrue(os.path.isfile('%s/lib-a-child0/data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/a/b/lib-a-child1/data.txt' % output))
 
     def test_link_with_content_selection_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.5/content',
-                          destination='../../temp',
-                          forced=True)
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-selective/data0.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-selective/data1.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-selective/data2.txt'))
-        self.assertFalse(os.path.isfile('../../temp/lib-a-selective/data.txt'))
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.5/content', target=output, forced=True)
 
-    def test_link_with_content_selection_in_sub_packages_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.6/content',
-                          destination='../../temp',
-                          forced=True)
+        self.assertTrue(os.path.isfile('%s/data0.txt' % output))
+        self.assertTrue(os.path.isfile('%s/data1.txt' % output))
+        self.assertTrue(os.path.isfile('%s/data2.txt' % output))
+        self.assertFalse(os.path.isfile('%s/data.txt' % output))
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data0.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data1.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data2.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-child-content/data3.txt'))
-        self.assertFalse(os.path.isfile('../../temp/lib-a-child-content/data.txt'))
+    def test_link_with_content_selection_in_child_links_in_linkspec(self):
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-    def test_link_with_external_packages_in_linkspec(self):
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.7/content',
-                          destination='../../temp',
-                          forced=True,
-                          params=dict(resources_package='../../tests/resources'))
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.6/content', target=output, forced=True)
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-with-external-packages/data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-with-external-packages/resources/data.txt'))
+        self.assertTrue(os.path.isfile('%s/child/data0.txt' % output))
+        self.assertTrue(os.path.isfile('%s/child/data1.txt' % output))
+        self.assertTrue(os.path.isfile('%s/child/data2.txt' % output))
+        self.assertFalse(os.path.isfile('%s/child/data.txt' % output))
 
-    def test_link_with_external_packages_default_content_in_linkspec(self):
-        import os
+    def test_link_with_external_links_in_linkspec(self):
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.7/content', target=output, forced=True,
+                    params=dict(resources_package='../../tests/resources'))
+
+        self.assertTrue(os.path.isfile('%s/data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/resources/data.txt' % output))
+
+    def test_link_with_external_links_default_content_in_linkspec(self):
         if os.path.exists('../../tests/empty_resources/default-data.txt'):
             os.remove('../../tests/empty_resources/default-data.txt')
 
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.8/content',
-                          destination='../../temp',
-                          forced=True,
-                          params=dict(resources_package='../../tests/empty_resources'))
+        if os.path.exists('../../tests/empty_resources/a'):
+            utils.rmdir('../../tests/empty_resources/a')
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/default-data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-child/resources/a/data.txt'))
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
+
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.8/content', target=output, forced=True,
+                    params=dict(resources_package='../../tests/empty_resources'))
+
+        self.assertTrue(os.path.isfile('%s/child/data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/child/resources/default-data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/child/resources/a/data.txt' % output))
 
     def test_overwrite_linkspec(self):
         import os
 
         content = """
-child_packages:
-- source: aaa
-  target: '{{__default__}}/lib-a-external-aaa'
-external_packages:
+links:
+- source: '{{__dir__}}/aaa'
+  target: '{{__target__}}/aaa'
+external_links:
 - source: '{{resources_package}}'
-  target: aaa/resources
-  default_content: ['_resources/*']
+  target: '{{__dir__}}/aaa/resources'
+  default_content: ['{{__dir__}}/_resources/*']
 """
         package_linkspec = yaml.load(content)
 
         if os.path.exists('../../tests/empty_resources/default-data.txt'):
             os.remove('../../tests/empty_resources/default-data.txt')
 
-        self._linker.link(name='lib-a',
-                          source='../../tests/lib-a1.0.8/content',
-                          destination='../../temp',
-                          forced=True,
-                          package_linkspec=package_linkspec,
-                          params=dict(resources_package='../../tests/empty_resources'))
+        if os.path.exists('../../tests/empty_resources/a'):
+            utils.rmdir('../../tests/empty_resources/a')
 
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/default-data.txt'))
-        self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/a/data.txt'))
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
+
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.8/content', target=output, forced=True,
+                    package_linkspec=package_linkspec,
+                    params=dict(resources_package='../../tests/empty_resources'))
+
+        self.assertTrue(os.path.isfile('%s/aaa/data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/aaa/resources/default-data.txt' % output))
+        self.assertTrue(os.path.isfile('%s/aaa/resources/a/data.txt' % output))
+
+        # if os.path.exists('../../tests/empty_resources/default-data.txt'):
+        #     os.remove('../../tests/empty_resources/default-data.txt')
+        #
+        # self._linker.link(name='lib-a',
+        #                   source='../../tests/lib-a1.0.8/content',
+        #                   target='../../temp',
+        #                   forced=True,
+        #                   package_linkspec=package_linkspec,
+        #                   params=dict(resources_package='../../tests/empty_resources'))
+        #
+        # self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/data.txt'))
+        # self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/default-data.txt'))
+        # self.assertTrue(os.path.isfile('../../temp/lib-a-external-aaa/resources/a/data.txt'))
 
     def test_load_package_linkspec_file(self):
         package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.0/content')
