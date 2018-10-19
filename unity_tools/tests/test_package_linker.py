@@ -139,34 +139,15 @@ external_links:
         self.assertTrue(os.path.isfile('%s/aaa/resources/default-data.txt' % output))
         self.assertTrue(os.path.isfile('%s/aaa/resources/a/data.txt' % output))
 
+    def test_link_with_no_target_if_linkspec_has_links(self):
+        output = '../../temp/output/lib-a'
+        utils.rmdir(output)
 
-    # def test_load_package_linkspec_file(self):
-    #     package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.0/content')
-    #
-    #     self.assertEqual({
-    #         'name': 'a-package-name',
-    #         'child_packages': [
-    #             {'source': 'aaa', 'target': '{{__default__}}/aaa'},
-    #             {'source': 'bbb', 'target': '{{__default__}}/bbb'},
-    #         ],
-    #         'external_packages': [
-    #             {'source': '{{var_a}}', 'target': 'aaa/Resources'},
-    #             {'source': '{{var_b}}', 'target': 'bbb/Resources'},
-    #             {'source': '{{c_d_e}}', 'target': 'ccc/Resources'},
-    #         ],
-    #     }, package_linkspec)
-    #
-    # def test_load_package_linkspec_file_not_using_child_packages(self):
-    #     package_linkspec = self._linker.read_package_linkspec(source='../../tests/lib-b1.0.1/content')
-    #
-    #     self.assertEqual({
-    #         'name': 'a-package-name',
-    #         'external_packages': [
-    #             {'source': '{{var_a}}', 'target': 'aaa/Resources'},
-    #             {'source': '{{var_b}}', 'target': 'bbb/Resources'},
-    #             {'source': '{{c_d_e}}', 'target': 'ccc/Resources'},
-    #         ],
-    #     }, package_linkspec)
+        linker = PackageLinker()
+        linker.link(source='../../tests/lib-a.1.0.9/content', forced=True,
+                    params={'output': output})
+
+        self.assertTrue(os.path.isfile('%s/child/data.txt' % output))
 
     def test_run_from_config(self):
         output = '../../temp/output/run-config'
@@ -220,39 +201,13 @@ external_links:
         self.assertTrue(os.path.isfile('%s/project-android/assets/images/fake-image.txt' % output))
         self.assertTrue(os.path.isfile('%s/project-android/assets/plugins/lib-c/c-data.txt' % output))
 
-    # def test_run_from_packages_config(self):
-    #     linker = PackageLinker(
-    #         packages_config='../../tests/packages.config',
-    #         packages_folder='../../tests',
-    #         destination='../../temp/from-packages-config',
-    #         params=dict(resources_package='../../tests/empty_resources')
-    #     )
-    #     linker.run()
-    #
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))
-    #
-    # def test_run_from_packages_config_and_params_config(self):
-    #     linker = PackageLinker(
-    #         packages_config='../../tests/packages.config',
-    #         packages_folder='../../tests',
-    #         destination='../../temp/from-packages-config',
-    #         params_config='../../tests/params.yaml',
-    #     )
-    #     linker.run()
-    #
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))
+    def test_run_from_config_with_no_link_targets(self):
+        output = '../../temp/output/run-config-no-link-targets'
+        utils.rmdir(output)
 
-    # def test_not_run_if_missing_parameters(self):
-    #     linker = PackageLinker(
-    #         packages_config='../../tests/packages.config',
-    #         packages_folder='../../tests',
-    #         destination='../../temp/from-packages-config')
-    #     linker.run()
-    #
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/default-data.txt'))
-    #     self.assertTrue(os.path.isfile('../../temp/from-packages-config/lib-a-external-child/resources/a/data.txt'))
+        linker = PackageLinker(config='../../tests/config-no-link-targets.yaml', params={
+            'output': output
+        })
+        linker.run()
+
+        self.assertTrue(os.path.isfile('%s/child/data.txt' % output))

@@ -51,12 +51,13 @@ class PackageLinker(object):
 
                 def _to_link(i):
                     source = os.path.abspath(self._render_template(i.get('source'), self._params))
-                    dest = os.path.abspath(self._render_template(i.get('target'), self._params))
+                    target_spec = i.get('target', None)
+                    target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
                     package_linkspec = i.get('linkspec', None)
 
                     return {
                         'source': source,
-                        'target': dest,
+                        'target': target,
                         'linkspec': package_linkspec,
                     }
 
@@ -110,7 +111,8 @@ class PackageLinker(object):
                 if v not in params:
                     raise ValueError('Unknown parameter "%s"' % v)
             return Template(template).render(**params)
-
+        except TypeError as err:
+            raise ValueError('Syntax error at "%s", error: %s' % (template, str(err)))
         except TemplateSyntaxError as err:
             raise ValueError('Syntax error at "%s", error: %s' % (template, str(err)))
 
@@ -134,8 +136,10 @@ class PackageLinker(object):
         :param params:
         :return:
         """
+        if not source:
+            raise ValueError('Missing required "source" parameter.')
+
         source = utils.realpath(source)
-        target = os.path.abspath(target)
 
         # utils.fs_link(source, target)
         if not package_linkspec:
@@ -143,14 +147,21 @@ class PackageLinker(object):
 
         # make a copy of the dict
         params = copy.deepcopy(params)
-        params['__source__'] = source
-        params['__target__'] = target
-        if set_dir:
-            params['__dir__'] = source
+        if source:
+            params['__source__'] = source
+            if set_dir:
+                params['__dir__'] = source
+
+        if target:
+            target = os.path.abspath(target)
+            params['__target__'] = target
 
         # child packages
         child_packages = package_linkspec.get('links', None)
         if not child_packages:
+            if not target:
+                raise ValueError('Missing parameter "target" but no links can be found in the linkspec.')
+
             content = package_linkspec.get('content', None)
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
