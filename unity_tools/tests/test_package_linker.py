@@ -198,6 +198,28 @@ external_links:
 
         self.assertTrue(os.path.isfile('%s/lib-c/c-data.txt' % output))
 
+    def test_run_from_config_and_overwrite_params(self):
+        output = '../../temp/output/run-config-params-overwrite'
+        utils.rmdir(output)
+
+        linker = PackageLinker(
+            config='../../tests/config-params-overwrite.yaml',
+            params={'output': output}
+        )
+        linker.run()
+
+        self.assertTrue(os.path.isfile('%s/project-ios/assets/images/fake-image.txt' % output))
+        self.assertTrue(os.path.isfile('%s/project-ios/assets/plugins/lib-c/c-data.txt' % output))
+
+        linker = PackageLinker(
+            config='../../tests/config-params-overwrite.yaml',
+            params={'output': output, 'platform': 'android'}
+        )
+        linker.run()
+
+        self.assertTrue(os.path.isfile('%s/project-android/assets/images/fake-image.txt' % output))
+        self.assertTrue(os.path.isfile('%s/project-android/assets/plugins/lib-c/c-data.txt' % output))
+
     # def test_run_from_packages_config(self):
     #     linker = PackageLinker(
     #         packages_config='../../tests/packages.config',

@@ -31,8 +31,6 @@ class PackageLinker(object):
         }
 
         if config:
-            self._params['__dir__'] = os.path.abspath(os.path.dirname(config))
-
             with open(config, 'r') as fh:
                 content = fh.read()
 
@@ -40,10 +38,13 @@ class PackageLinker(object):
 
                 # parameters
                 params_data = config_data.get('params', {})
-                self._expand_params(params_data)
+                params.update({
+                    '__cwd__': os.path.abspath(os.getcwd()),
+                    '__dir__': os.path.abspath(os.path.dirname(config)),
+                })
 
-                # override params
-                self._params.update(params)
+                self._params = copy.deepcopy(params)
+                self._expand_params(params_data, exclude=params)
 
                 # links
                 links_data = config_data.get('links', {})
@@ -96,9 +97,10 @@ class PackageLinker(object):
             #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
             #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
-    def _expand_params(self, params_data):
+    def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
-            self._params[k] = self._render_template(item, self._params)
+            if k not in exclude:
+                self._params[k] = self._render_template(item, self._params)
 
     def _render_template(self, template, params={}):
         try:

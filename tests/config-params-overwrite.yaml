@@ -1,0 +1,13 @@
+# Note: the config requires an output parameter.
+params:
+  platform: 'ios'
+  project: '{{output}}/project-{{platform}}'
+  assets: '{{project}}/assets'
+  plugins: '{{assets}}/plugins'
+
+links:
+  - source: '{{__dir__}}/lib-c.1.0.0'
+    target: '{{plugins}}/lib-c'
+
+  - source: '{{__dir__}}/assets'
+    target: '{{assets}}/images'
