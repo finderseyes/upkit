@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from unity_tools import UnityTools
+from unity_tools.tools import execute_from_command_line
 
-tools = UnityTools()
-tools.run()
+execute_from_command_line()
 
