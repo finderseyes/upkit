@@ -1,4 +1,5 @@
 import glob
+import copy
 import os
 import yaml
 import yamlordereddictloader
@@ -10,11 +11,11 @@ from unity_tools import utils
 
 class PackageLinker(object):
     def __init__(self, config=None,
-                 packages_config=None,
-                 packages_folder=None,
-                 params_config=None,
-                 destination=None,
-                 params={}):
+                 params={},
+                 # packages_config=None,
+                 # packages_folder=None,
+                 # params_config=None,
+                 ):
         """
 
         :param config: the config file, will override packages_config and params_config
@@ -23,21 +24,13 @@ class PackageLinker(object):
         :param destination: the default link destination folder
         :param params: command-line parameters.
         """
-        if not destination:
-            raise ValueError('Missing required parameter "destination"')
-
-        destination = os.path.abspath(destination)
 
         self._jinja_environment = Environment()
-        self._destination = destination
         self._params = {
-            '__default__': destination,
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
         if config:
-            self._params['__dir__'] = os.path.abspath(os.path.dirname(config))
-
             with open(config, 'r') as fh:
                 content = fh.read()
 
@@ -45,67 +38,69 @@ class PackageLinker(object):
 
                 # parameters
                 params_data = config_data.get('params', {})
-                self._expand_params(params_data)
+                params.update({
+                    '__cwd__': os.path.abspath(os.getcwd()),
+                    '__dir__': os.path.abspath(os.path.dirname(config)),
+                })
 
-                # override params
-                self._params.update(params)
+                self._params = copy.deepcopy(params)
+                self._expand_params(params_data, exclude=params)
 
                 # links
                 links_data = config_data.get('links', {})
 
-                def _to_link(i, dest):
-                    name = i.get('name')
+                def _to_link(i):
                     source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    dest = os.path.abspath(self._render_template(i.get('target'), self._params))
                     package_linkspec = i.get('linkspec', None)
-                    destination_spec = i.get('destination', dest)
-                    dest = os.path.abspath(self._render_template(destination_spec, self._params))
 
                     return {
-                        'name': name,
                         'source': source,
-                        'destination': dest,
-                        'package_linkspec': package_linkspec,
+                        'target': dest,
+                        'linkspec': package_linkspec,
                     }
 
-                self._links = [_to_link(item, destination) for item in links_data]
+                self._links = [_to_link(item) for item in links_data]
         else:
-            if params_config:
-                self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
-                with open(params_config, 'r') as fh:
-                    content = fh.read()
-                    params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
-                    self._expand_params(params_data)
+            self._links = []
+            # if params_config:
+            #     self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
+            #     with open(params_config, 'r') as fh:
+            #         content = fh.read()
+            #         params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
+            #         self._expand_params(params_data)
+            #
+            # # override params
+            # self._params.update(params)
+            #
+            # # packages
+            # if packages_config:
+            #     if not packages_folder:
+            #         raise ValueError('Missing parameter "packages_folder".')
+            #
+            #     self._params['__dir__'] = os.path.abspath(os.path.dirname(packages_config))
+            #     with open(packages_config, 'r') as fh:
+            #         content = fh.read()
+            #         packages_data = xmltodict.parse(content)
+            #
+            #         def _to_link(i, pkg_folder, dest):
+            #             name = '%s.%s' % (i.get('@id'), i.get('@version'))
+            #             source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
+            #
+            #             return {
+            #                 'name': name,
+            #                 'source': source,
+            #                 'destination': dest,
+            #                 'linkspec': None,
+            #             }
+            #
+            #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
+            #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
-            # override params
-            self._params.update(params)
-
-            # packages
-            if packages_config:
-                if not packages_folder:
-                    raise ValueError('Missing parameter "packages_folder".')
-
-                self._params['__dir__'] = os.path.abspath(os.path.dirname(packages_config))
-                with open(packages_config, 'r') as fh:
-                    content = fh.read()
-                    packages_data = xmltodict.parse(content)
-
-                    def _to_link(i, pkg_folder, dest):
-                        name = '%s.%s' % (i.get('@id'), i.get('@version'))
-                        source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
-
-                        return {
-                            'name': name,
-                            'source': source,
-                            'destination': dest,
-                            'package_linkspec': None,
-                        }
-
-                    self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
-                                   for item in utils.guaranteed_list(packages_data['packages']['package'])]
-
-    def _expand_params(self, params_data):
+    def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
-            self._params[k] = self._render_template(item, self._params)
+            if k not in exclude:
+                self._params[k] = self._render_template(item, self._params)
 
     def _render_template(self, template, params={}):
         try:
@@ -122,85 +117,83 @@ class PackageLinker(object):
     def run(self):
         for link in self._links:
             self.link(source=link['source'],
-                      destination=link['destination'],
-                      name=link['name'],
-                      package_linkspec=link['package_linkspec'],
+                      target=link['target'],
+                      package_linkspec=link['linkspec'],
                       forced=True,
+                      set_dir=('__dir__' in self._params),
                       params=self._params)
 
-    def link(self, source=None, destination=None, forced=False, name=None, package_linkspec=None, params={}):
+    def link(self, source=None, target=None, forced=False, package_linkspec=None, set_dir=True, params={}):
         """
         Link a source folder to a sub-folder in destination folder using given name.
         :param source:
-        :param destination:
+        :param target:
         :param forced:
-        :param name:
         :param package_linkspec:
+        :param set_dir:
+        :param params:
         :return:
         """
         source = utils.realpath(source)
-        destination = os.path.abspath(destination)
+        target = os.path.abspath(target)
 
         # utils.fs_link(source, target)
         if not package_linkspec:
             package_linkspec = self.read_package_linkspec(source)
 
-        params['__default__'] = destination
-
-        # package name.
-        name = package_linkspec.get('name', name)
-        if not name:
-            raise ValueError('Missing name for package "%s"'.format(source))
-
-        # target
-        target_spec = package_linkspec.get('target', None)
-        if not target_spec:
-            target = os.path.join(destination, name)
-        else:
-            target = self._render_template(target_spec, params)
-        target = os.path.abspath(target)
+        # make a copy of the dict
+        params = copy.deepcopy(params)
+        params['__source__'] = source
+        params['__target__'] = target
+        if set_dir:
+            params['__dir__'] = source
 
         # child packages
-        child_packages = package_linkspec.get('child_packages', None)
+        child_packages = package_linkspec.get('links', None)
         if not child_packages:
             content = package_linkspec.get('content', None)
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
             else:
-                content_items = [p for item in content for p in glob.glob(os.path.abspath(os.path.join(source, item)))]
+                content_items = [
+                    p for item in content
+                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                ]
                 for content_item in content_items:
                     content_item_name = os.path.basename(content_item)
                     content_item_target = os.path.abspath(os.path.join(target, content_item_name))
                     utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
         else:
             for item in child_packages:
-                item_source = os.path.abspath(os.path.join(source, item['source']))
                 item_target = os.path.abspath(self._render_template(item['target'], params))
 
                 content = item.get('content', None)
+
+                # content will overwrite the source
                 if not content:
+                    item_source = os.path.abspath(self._render_template(item['source'], params))
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
                     content_items = [p for item in content for p in
-                                     glob.glob(os.path.abspath(os.path.join(item_source, item)))]
+                                     glob.glob(os.path.abspath(self._render_template(item, params)))]
                     for content_item in content_items:
                         content_item_name = os.path.basename(content_item)
                         content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
 
         # external packages
-        external_packages = package_linkspec.get('external_packages', None)
+        external_packages = package_linkspec.get('external_links', None)
         if external_packages:
             for item in external_packages:
                 item_source = os.path.abspath(self._render_template(item['source'], params))
-                item_target = os.path.abspath(os.path.join(source, item['target']))
+                item_target = os.path.abspath(self._render_template(item['target'], params))
                 utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
 
                 default_content = item.get('default_content', None)
                 if default_content:
                     content_items = [
                         p for item in default_content for p in
-                        glob.glob(os.path.abspath(os.path.join(source, item)))
+                        glob.glob(os.path.abspath(self._render_template(item, params)))
                     ]
                     for content_item in content_items:
                         content_item_name = os.path.basename(content_item)

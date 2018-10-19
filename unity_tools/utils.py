@@ -1,8 +1,8 @@
 import errno
 import os
 import shutil
+from subprocess import call
 from sys import platform
-from subprocess import call, check_output
 
 
 def guaranteed_list(x):
@@ -37,6 +37,13 @@ def remove(path):
         call('cmd /c rm "%s"' % path, shell=True)
     else:
         call('rm "%s"' % path, shell=True)
+
+
+def rmdir(path):
+    if platform == 'cygwin' or platform == 'win32':
+        call('cmd /c rmdir /Q /S "%s"' % path, shell=True)
+    else:
+        call('rm -rf "%s"' % path, shell=True)
 
 
 def mkdir_p(path):

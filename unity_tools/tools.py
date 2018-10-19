@@ -11,18 +11,18 @@ class LinkPackageCommand(object):
         parser.add_argument('-c', '--config', dest='config',
                             help='Path to link configuration file (config.yaml)')
 
-        parser.add_argument('--packages-config', dest='packages_config',
-                            help='Path to Nuget packages.config file')
-        parser.add_argument('--packages-folder', dest='packages_folder',
-                            help='Path to folder containg Nuget packages')
+        # parser.add_argument('--packages-config', dest='packages_config',
+        #                     help='Path to Nuget packages.config file')
+        # parser.add_argument('--packages-folder', dest='packages_folder',
+        #                     help='Path to folder containg Nuget packages')
+        #
+        # parser.add_argument('--params-config', dest='params_config',
+        #                     help='Path to link parameter file (params.yml)')
 
-        parser.add_argument('--params-config', dest='params_config',
-                            help='Path to link parameter file (params.yml)')
+        # parser.add_argument('-d', '--destination', dest='destination', required=True,
+        #                     help='Path to destination folder containing target links.')
 
-        parser.add_argument('-d', '--destination', dest='destination', required=True,
-                            help='Path to destination folder containing target links.')
-
-        parser.add_argument('-p', '--parameter', dest='params', action='append',
+        parser.add_argument('-p', dest='params', action='append',
                             help='Parameters.')
 
         # parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,
@@ -40,22 +40,23 @@ class LinkPackageCommand(object):
             if args.config:
                 args.confg = os.path.abspath(args.config)
 
-            if args.packages_config:
-                args.packages_config = os.path.abspath(args.packages_config)
-
-            if args.packages_folder:
-                args.packages_folder = os.path.abspath(args.packages_folder)
-
-            if args.params_config:
-                args.params_config = os.path.abspath(args.params_config)
+            # if args.packages_config:
+            #     args.packages_config = os.path.abspath(args.packages_config)
+            #
+            # if args.packages_folder:
+            #     args.packages_folder = os.path.abspath(args.packages_folder)
+            #
+            # if args.params_config:
+            #     args.params_config = os.path.abspath(args.params_config)
 
             linker = PackageLinker(
                 config=args.config,
-                packages_config=args.packages_config,
-                packages_folder=args.packages_folder,
-                params_config=args.params_config,
-                destination=args.destination,
-                params=params
+                params=params,
+                # packages_config=args.packages_config,
+                # packages_folder=args.packages_folder,
+                # params_config=args.params_config,
+                # destination=args.destination,
+
             )
             linker.run()
             print('Package link completed.')
@@ -68,7 +69,7 @@ class LinkPackageCommand(object):
 class UnityTools(object):
     def __init__(self):
         self._commands = {
-            'link-package': LinkPackageCommand(),
+            'link': LinkPackageCommand(),
         }
 
     def run(self):
