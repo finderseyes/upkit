@@ -1,15 +1,13 @@
-import subprocess
-
 import setuptools
-from sys import platform
-from setuptools.command.install import install
+
+from unity_tools import __version__
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name='unity-tools',
-    version='0.3.0',
+    version=__version__,
     scripts=['unity-tools.py'],
     entry_points={
         'console_scripts': [
