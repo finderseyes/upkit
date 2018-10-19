@@ -61,7 +61,7 @@ class PackageLinker(object):
 
                 self._links = [_to_link(item) for item in links_data]
         else:
-            raise ValueError('config is required.')
+            self._links = []
             # if params_config:
             #     self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
             #     with open(params_config, 'r') as fh:
