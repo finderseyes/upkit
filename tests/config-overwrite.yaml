@@ -1,14 +1,13 @@
+# Note: the config requires an output parameter.
 params:
   resources_package: '{{__dir__}}/empty_resources'
 links:
-  - name: lib-a
-    source: '{{__dir__}}/lib-a1.0.8/content'
-    # overwrite the linkspec in the package.
+  - source: '{{__dir__}}/lib-a.1.0.8/content'
+    target: '{{output}}/lib-a'
     linkspec:
-      child_packages:
-        - source: aaa
-          target: '{{__default__}}/lib-a-external-aaa'
-      external_packages:
-        - source: '{{resources_package}}'
-          target: aaa/resources
-          default_content: ['_resources/*']
+      links:
+        - source: '{{__source__}}/aaa'
+          target: '{{__target__}}/aaa'
+
+  - source: '{{__dir__}}/lib-c.1.0.0'
+    target: '{{output}}/lib-c'

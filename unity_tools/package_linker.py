@@ -11,10 +11,11 @@ from unity_tools import utils
 
 class PackageLinker(object):
     def __init__(self, config=None,
-                 packages_config=None,
-                 packages_folder=None,
-                 params_config=None,
-                 params={}):
+                 params={},
+                 # packages_config=None,
+                 # packages_folder=None,
+                 # params_config=None,
+                 ):
         """
 
         :param config: the config file, will override packages_config and params_config
@@ -48,54 +49,52 @@ class PackageLinker(object):
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    name = i.get('name')
                     source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    dest = os.path.abspath(self._render_template(i.get('target'), self._params))
                     package_linkspec = i.get('linkspec', None)
-                    target_spec = i.get('target')
-                    dest = os.path.abspath(self._render_template(target_spec, self._params))
 
                     return {
-                        'name': name,
                         'source': source,
                         'target': dest,
-                        'package_linkspec': package_linkspec,
+                        'linkspec': package_linkspec,
                     }
 
                 self._links = [_to_link(item) for item in links_data]
         else:
-            if params_config:
-                self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
-                with open(params_config, 'r') as fh:
-                    content = fh.read()
-                    params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
-                    self._expand_params(params_data)
-
-            # override params
-            self._params.update(params)
-
-            # packages
-            if packages_config:
-                if not packages_folder:
-                    raise ValueError('Missing parameter "packages_folder".')
-
-                self._params['__dir__'] = os.path.abspath(os.path.dirname(packages_config))
-                with open(packages_config, 'r') as fh:
-                    content = fh.read()
-                    packages_data = xmltodict.parse(content)
-
-                    def _to_link(i, pkg_folder, dest):
-                        name = '%s.%s' % (i.get('@id'), i.get('@version'))
-                        source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
-
-                        return {
-                            'name': name,
-                            'source': source,
-                            'destination': dest,
-                            'package_linkspec': None,
-                        }
-
-                    self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
-                                   for item in utils.guaranteed_list(packages_data['packages']['package'])]
+            raise ValueError('config is required.')
+            # if params_config:
+            #     self._params['__dir__'] = os.path.abspath(os.path.dirname(params_config))
+            #     with open(params_config, 'r') as fh:
+            #         content = fh.read()
+            #         params_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
+            #         self._expand_params(params_data)
+            #
+            # # override params
+            # self._params.update(params)
+            #
+            # # packages
+            # if packages_config:
+            #     if not packages_folder:
+            #         raise ValueError('Missing parameter "packages_folder".')
+            #
+            #     self._params['__dir__'] = os.path.abspath(os.path.dirname(packages_config))
+            #     with open(packages_config, 'r') as fh:
+            #         content = fh.read()
+            #         packages_data = xmltodict.parse(content)
+            #
+            #         def _to_link(i, pkg_folder, dest):
+            #             name = '%s.%s' % (i.get('@id'), i.get('@version'))
+            #             source = os.path.abspath(os.path.join(pkg_folder, name, 'content'))
+            #
+            #             return {
+            #                 'name': name,
+            #                 'source': source,
+            #                 'destination': dest,
+            #                 'linkspec': None,
+            #             }
+            #
+            #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
+            #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
     def _expand_params(self, params_data):
         for k, item in params_data.items():
@@ -116,19 +115,21 @@ class PackageLinker(object):
     def run(self):
         for link in self._links:
             self.link(source=link['source'],
-                      target=link['destination'],
-                      name=link['name'],
-                      package_linkspec=link['package_linkspec'],
+                      target=link['target'],
+                      package_linkspec=link['linkspec'],
                       forced=True,
+                      set_dir=('__dir__' in self._params),
                       params=self._params)
 
-    def link(self, source=None, target=None, forced=False, package_linkspec=None, params={}):
+    def link(self, source=None, target=None, forced=False, package_linkspec=None, set_dir=True, params={}):
         """
         Link a source folder to a sub-folder in destination folder using given name.
         :param source:
         :param target:
         :param forced:
         :param package_linkspec:
+        :param set_dir:
+        :param params:
         :return:
         """
         source = utils.realpath(source)
@@ -142,7 +143,8 @@ class PackageLinker(object):
         params = copy.deepcopy(params)
         params['__source__'] = source
         params['__target__'] = target
-        params['__dir__'] = source
+        if set_dir:
+            params['__dir__'] = source
 
         # child packages
         child_packages = package_linkspec.get('links', None)
