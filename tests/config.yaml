@@ -1,0 +1,9 @@
+# Note: the config requires an output parameter.
+params:
+  resources_package: '{{__dir__}}/empty_resources'
+links:
+  - source: '{{__dir__}}/lib-a.1.0.8/content'
+    target: '{{output}}/lib-a'
+
+  - source: '{{__dir__}}/lib-c.1.0.0'
+    target: '{{output}}/lib-c'

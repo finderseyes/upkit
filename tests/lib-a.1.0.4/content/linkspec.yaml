@@ -1,0 +1,5 @@
+links:
+  - source: '{{__dir__}}/child0'
+    target: '{{__target__}}/lib-a-child0'
+  - source: '{{__dir__}}/child1'
+    target: '{{__target__}}/a/b/lib-a-child1'

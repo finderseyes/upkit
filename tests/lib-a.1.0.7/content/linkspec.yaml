@@ -1,0 +1,3 @@
+external_links:
+  - source: '{{resources_package}}'
+    target: '{{__target__}}/resources'
