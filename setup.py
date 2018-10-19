@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='unity-tools',
-    version='0.2.0',
+    version='0.3.0',
     scripts=['unity-tools.py'],
     entry_points={
         'console_scripts': [
