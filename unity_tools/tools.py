@@ -81,15 +81,18 @@ class UnityTools(object):
 
         parser = argparse.ArgumentParser(description='Unity3D project utilities.')
         parser.add_argument('-v', '--version', action='version', version='Unity tools %s' % __version__)
-        subparsers = parser.add_subparsers(help='sub-command help')
+        subparsers = parser.add_subparsers(help='Tool command to execute')
 
         for k, v in self._commands.items():
-            command_parser = subparsers.add_parser(k, help='Help for command %s'.format(k))
+            command_parser = subparsers.add_parser(k, help='Link packages with given configs')
             v.build_argument_parser(command_parser)
             command_parser.set_defaults(func=lambda a: v.run(a))
 
         args = parser.parse_args()
-        args.func(args)
+        if hasattr(args, 'func'):
+            args.func(args)
+        else:
+            parser.print_help()
 
 
 def execute_from_command_line():
