@@ -3,8 +3,8 @@ import unittest
 
 import yaml
 
-from unity_tools import utils
-from unity_tools.package_linker import PackageLinker
+from upkit import utils
+from upkit.package_linker import PackageLinker
 
 
 class PackageLinkerTestCase(unittest.TestCase):

@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 
-from unity_tools import utils
+from upkit import utils
 
 
 class LinkPackageCommand(object):
@@ -32,7 +32,7 @@ class LinkPackageCommand(object):
         # parser.add_argument('-r', '--params', dest='params', required=False, help='Path to XML parameter file')
 
     def run(self, args):
-        from unity_tools.package_linker import PackageLinker
+        from upkit.package_linker import PackageLinker
 
         try:
             params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])

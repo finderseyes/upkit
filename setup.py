@@ -1,17 +1,17 @@
 import setuptools
 
-from unity_tools import __version__
+from upkit import __version__
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='unity-tools',
+    name='upkit',
     version=__version__,
-    scripts=['unity-tools.py'],
+    scripts=['upkit.py'],
     entry_points={
         'console_scripts': [
-            'unity-tools = unity_tools.tools:execute_from_command_line',
+            'unity-tools = upkit.tools:execute_from_command_line',
         ],
     },
     author='Vu Le (findereyes)',
@@ -19,7 +19,7 @@ setuptools.setup(
     description='Project and package manager for Unity3D',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/finderseyes/unity-tools',
+    url='https://github.com/finderseyes/upkit',
     packages=setuptools.find_packages(),
     install_requires=['xmltodict', 'pyyaml', 'yamlordereddictloader', 'jinja2',],
     classifiers=[
