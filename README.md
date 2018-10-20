@@ -2,7 +2,7 @@
 
 `upkit` is a command line toolkit that helps you create/organize your Unity3D projects and manage their dependencies. 
 
-_If you are in a hurry, go to [Getting Started](##getting-tarted) to see it in action, otherwise, take a few minutes reading the following section to see what problems it tries to solve._
+_If you are in a hurry, go to [Getting Started](#getting-started) to see it in action, otherwise, take a few minutes reading the following section to see what problems it tries to solve._
 
 ## Why should you use it? 
 
@@ -30,7 +30,7 @@ In particular, `upkit` provides the following main features:
 
 These instructions will create a simple Unity3D project with a Nuget dependency (Newtonsoft.Json) using `upkit`.
 
-_The source code to this project can be also found under [`examples/appkit`](#https://github.com/finderseyes/upkit/tree/develop/examples/appkit)._
+The source code to this project can be also found under [`examples/appkit`](https://github.com/finderseyes/upkit/tree/develop/examples/appkit).
 
 ### Prerequisites
 
