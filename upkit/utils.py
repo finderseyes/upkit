@@ -26,7 +26,7 @@ def realpath(path):
 
 def is_link(path):
     if platform == 'cygwin' or platform == 'win32':
-        import win32
+        from upkit import win32
         return os.path.islink(path) or win32.is_junction(path)
     else:
         return os.path.islink(path)
