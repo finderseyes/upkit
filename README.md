@@ -115,10 +115,12 @@ links:
 ```bash
 #!/usr/bin/env bash
 
+# resolve Nuget dependencies
 nuget restore packages.config -PackagesDirectory dependencies
 
-unity-tools link -c project-config.yaml -p platform=ios
-unity-tools link -c project-config.yaml -p platform=android
+# call upkit to link and generate Unity projects.
+upkit link -c project-config.yaml -p platform=ios
+upkit link -c project-config.yaml -p platform=android
 ```
 
 ### Generate Unity projects
