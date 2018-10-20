@@ -11,7 +11,7 @@ setuptools.setup(
     scripts=['upkit.py'],
     entry_points={
         'console_scripts': [
-            'unity-tools = upkit.tools:execute_from_command_line',
+            'upkit = upkit.tools:execute_from_command_line',
         ],
     },
     author='Vu Le (findereyes)',
