@@ -8,7 +8,7 @@ with open('README.md', 'r') as fh:
 setuptools.setup(
     name='upkit',
     version=__version__,
-    scripts=['upkit.py'],
+    # scripts=['upkit.py'],
     entry_points={
         'console_scripts': [
             'upkit = upkit.tools:execute_from_command_line',
