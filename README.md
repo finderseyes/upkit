@@ -124,7 +124,7 @@ upkit link -c project-config.yaml -p platform=android
 ```
 
 ### Generate Unity projects
-It's simple, just run the `initialize.sh` script. There will be two newly created project folders under, namely `appkit-ios` and `appkit-android`. Open these folder as Unity project and voilà. 
+It's simple, just run `initialize.sh` script. There will be two new folders, namely `appkit-ios` and `appkit-android`, under `unity-projects`. Open these folder in Unity and voilà, ready to go.
 ```
 (project)/
 ├── unity-projects/
