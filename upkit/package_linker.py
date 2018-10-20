@@ -6,7 +6,7 @@ import yamlordereddictloader
 import xmltodict
 from jinja2 import Template, Environment, meta, TemplateSyntaxError
 
-from unity_tools import utils
+from upkit import utils
 
 
 class PackageLinker(object):
