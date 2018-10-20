@@ -42,7 +42,7 @@ For this example, you will also need `nuget` to resolve Nuget dependencies.
 Run the following command to install `upkit` from Github repository.
 
 ```
-$ pip install git+https://github.com/finderseyes/upkit.git
+$ pip install upkit
 ```
 
 ### Create the project structure
