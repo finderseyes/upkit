@@ -157,11 +157,20 @@ class PackageLinker(object):
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
             else:
+                exclude = package_linkspec.get('exclude', None)
+                exclude_items = set(
+                    p for item in exclude
+                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                ) if exclude else set()
+
                 content_items = [
                     p for item in content
                     for p in glob.glob(os.path.abspath(self._render_template(item, params)))
                 ]
                 for content_item in content_items:
+                    if content_item in exclude_items:
+                        continue
+
                     content_item_name = os.path.basename(content_item)
                     content_item_target = os.path.abspath(os.path.join(target, content_item_name))
                     utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
@@ -176,9 +185,18 @@ class PackageLinker(object):
                     item_source = os.path.abspath(self._render_template(item['source'], params))
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
-                    content_items = [p for item in content for p in
-                                     glob.glob(os.path.abspath(self._render_template(item, params)))]
+                    exclude = item.get('exclude', None)
+                    exclude_items = set(
+                        p for i in exclude
+                        for p in glob.glob(os.path.abspath(self._render_template(i, params)))
+                    ) if exclude else set()
+
+                    content_items = [p for i in content for p in
+                                     glob.glob(os.path.abspath(self._render_template(i, params)))]
                     for content_item in content_items:
+                        if content_item in exclude_items:
+                            continue
+
                         content_item_name = os.path.basename(content_item)
                         content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)

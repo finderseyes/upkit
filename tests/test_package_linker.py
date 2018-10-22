@@ -211,3 +211,28 @@ external_links:
         linker.run()
 
         self.assertTrue(os.path.isfile('%s/child/data.txt' % output))
+
+    def test_link_with_content_selection_and_exclude_in_linkspec(self):
+        output = '../temp/output/lib-a'
+        utils.rmdir(output)
+
+        linker = PackageLinker()
+        linker.link(source='../test_data/lib-a.1.0.5.1/content', target=output, forced=True)
+
+        self.assertTrue(os.path.isfile('%s/data0.txt' % output))
+        self.assertTrue(os.path.isfile('%s/data2.txt' % output))
+        self.assertFalse(os.path.isfile('%s/data1.txt' % output))
+        self.assertFalse(os.path.isfile('%s/data.txt' % output))
+
+    def test_link_with_content_selection_and_exclude_child_package_in_linkspec(self):
+        output = '../temp/output/lib-a'
+        utils.rmdir(output)
+
+        linker = PackageLinker()
+        linker.link(source='../test_data/lib-a.1.0.6.1/content', target=output, forced=True)
+
+        self.assertTrue(os.path.isfile('%s/child/data0.txt' % output))
+        self.assertTrue(os.path.isfile('%s/child/data2.txt' % output))
+        self.assertFalse(os.path.isfile('%s/child/data1.txt' % output))
+        self.assertFalse(os.path.isfile('%s/child/data.txt' % output))
+

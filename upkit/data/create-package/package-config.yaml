@@ -1,4 +1,5 @@
 {% raw %}
+
 params:
   assets: '{{__dir__}}/assets'
   plugins: '{{__dir__}}/plugins'

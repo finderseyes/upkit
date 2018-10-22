@@ -44,7 +44,7 @@ class CreatePackageCommand(object):
         self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'data'))
         self.env = Environment(
             loader=PackageLoader('upkit', 'data/create-package'),
-            autoescape=select_autoescape(['html', 'xml'])
+            autoescape=select_autoescape(['html', 'xml', 'nuspec'])
         )
 
     def build_argument_parser(self, parser):
@@ -59,10 +59,34 @@ class CreatePackageCommand(object):
             os.mkdir(os.path.join(args.location, 'project'))
 
             # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')
-            template = self.env.get_template('package-config.yaml')
-            package_config_file = os.path.join(args.location, 'package-config.yaml')
-            with open(package_config_file, 'w') as writer:
-                writer.write(template.render())
+            if True:
+                template = self.env.get_template('package-config.yaml')
+                file_path = os.path.join(args.location, 'package-config.yaml')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('linkspec.yaml')
+                file_path = os.path.join(args.location, 'linkspec.yaml')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('git-ignore')
+                file_path = os.path.join(args.location, '.gitignore')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('package.nuspec')
+                file_path = os.path.join(args.location, 'package.nuspec')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
             print('Package created.')
         except:
             print('Creating package failed with errors.')
