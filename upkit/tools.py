@@ -60,28 +60,28 @@ class CreatePackageCommand(object):
 
             # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')
             if True:
-                template = self.env.get_template('package-config.yaml')
+                template = self.env.get_template('package-config.yaml.j2')
                 file_path = os.path.join(args.location, 'package-config.yaml')
                 with open(file_path, 'w') as writer:
                     data = template.render()
                     writer.write(data.encode('utf-8'))
 
             if True:
-                template = self.env.get_template('linkspec.yaml')
+                template = self.env.get_template('linkspec.yaml.j2')
                 file_path = os.path.join(args.location, 'linkspec.yaml')
                 with open(file_path, 'w') as writer:
                     data = template.render()
                     writer.write(data.encode('utf-8'))
 
             if True:
-                template = self.env.get_template('git-ignore')
+                template = self.env.get_template('git-ignore.j2')
                 file_path = os.path.join(args.location, '.gitignore')
                 with open(file_path, 'w') as writer:
                     data = template.render()
                     writer.write(data.encode('utf-8'))
 
             if True:
-                template = self.env.get_template('package.nuspec')
+                template = self.env.get_template('package.nuspec.j2')
                 file_path = os.path.join(args.location, 'package.nuspec')
                 with open(file_path, 'w') as writer:
                     data = template.render()
