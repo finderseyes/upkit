@@ -1,6 +1,8 @@
 import glob
 import copy
 import os
+from subprocess import call
+
 import yaml
 import yamlordereddictloader
 import xmltodict
@@ -9,17 +11,41 @@ from jinja2 import Template, Environment, meta, TemplateSyntaxError
 from upkit import utils
 
 
+class NugetResolver(object):
+    scheme = 'nuget:'
+
+    def __init__(self, package_linker):
+        self.package_linker = package_linker
+
+    def resolve(self, source):
+        (package, version) = source[len(self.scheme):].split('@')
+        sub_path = ''
+        if '/' in version:
+            idx = version.index('/')
+            sub_path = version[idx + 1:]
+            version = version[:idx]
+
+        call('nuget install %s -Version %s -OutputDirectory "%s"' % (package, version,
+                                                                     self.package_linker.package_folder),
+             shell=True)
+        return os.path.join(self.package_linker.package_folder, '%s.%s' % (package, version), sub_path)
+
+
 class PackageLinker(object):
-    def __init__(self, config_file=None, params={}):
+    def __init__(self, config_file=None, package_folder=None, params={}):
         """
         :param config_file: the config file
+        :param package_folder: the folder where Nuget and other remote packages will be resolved to.
         :param params: command-line parameters.
         """
+        self.source_resolvers = [ NugetResolver(self) ]
 
         self._jinja_environment = Environment()
         self._params = {
             '__cwd__': os.path.abspath(os.getcwd()),
         }
+
+        self.package_folder = os.path.abspath(package_folder)
 
         if config_file:
             with open(config_file, 'r') as fh:
@@ -89,6 +115,16 @@ class PackageLinker(object):
             #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
             #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
+    def _try_resolve(self, source):
+        normalized_source = source.strip()
+        for resolver in self.source_resolvers:
+            if not normalized_source.startswith(resolver.scheme):
+                continue
+            return resolver.resolve(normalized_source)
+
+        # fallback to file resolver.
+        return utils.realpath(source)
+
     def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
             if k not in exclude:
@@ -130,7 +166,7 @@ class PackageLinker(object):
         if not source:
             raise ValueError('Missing required "source" parameter.')
 
-        source = utils.realpath(source)
+        source = self._try_resolve(source)
 
         # utils.fs_link(source, target)
         if not package_linkspec:
