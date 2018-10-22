@@ -49,10 +49,17 @@ class CreatePackageCommand(object):
 
     def build_argument_parser(self, parser):
         parser.add_argument('location', help='Package location')
+        parser.add_argument('--link', action='store_const', const=True,
+                            help='Link and create package Unity project after created')
 
     def run(self, args):
         try:
-            os.mkdir(args.location)
+            if os.path.exists(args.location):
+                if os.path.isfile(args.location) or os.listdir(args.location):
+                    raise RuntimeError('"%s" must be an empty folder.' % args.location)
+            else:
+                os.mkdir(args.location)
+
             os.mkdir(os.path.join(args.location, 'assets'))
             os.mkdir(os.path.join(args.location, 'plugins'))
             os.mkdir(os.path.join(args.location, 'settings'))
@@ -86,8 +93,14 @@ class CreatePackageCommand(object):
                 with open(file_path, 'w') as writer:
                     data = template.render()
                     writer.write(data.encode('utf-8'))
-
             print('Package created.')
+
+            if args.link:
+                from upkit.package_linker import PackageLinker
+                linker = PackageLinker(config_file=os.path.abspath(os.path.join(args.location, 'package-config.yaml')))
+                linker.run()
+                print('Package link completed.')
+
         except:
             print('Creating package failed with errors.')
             print(traceback.format_exc())

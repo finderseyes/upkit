@@ -83,6 +83,11 @@ def fs_unlink(path):
         call('rm "%s"' % path, shell=True)
 
 
+def touch(path):
+    with open(path, 'a'):
+        os.utime(path, None)
+
+
 def fs_link(source, target, hard_link=True, forced=False):
     """
     
