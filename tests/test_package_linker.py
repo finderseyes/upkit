@@ -236,3 +236,45 @@ external_links:
         self.assertFalse(os.path.isfile('%s/child/data1.txt' % output))
         self.assertFalse(os.path.isfile('%s/child/data.txt' % output))
 
+    def test_support_nuget_source(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='nuget:NuGet.Core@2.14.0', target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(package_folder, 'Nuget.Core.2.14.0')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'Nuget.Core.2.14.0.nupkg')))
+
+    def test_support_nuget_source_with_path(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='nuget:NuGet.Core@2.14.0/lib', target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(package_folder, 'Nuget.Core.2.14.0')))
+        self.assertTrue(os.path.isdir(os.path.join(output, 'net40-Client')))
+
+    def test_support_nuget_source_with_deep_path(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='nuget:NuGet.Core@2.14.0/lib/net40-Client', target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(package_folder, 'Nuget.Core.2.14.0')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'NuGet.Core.Dll')))
+
