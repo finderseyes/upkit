@@ -1,0 +1,15 @@
+{% raw %}
+params:
+  assets: '{{__dir__}}/assets'
+  plugins: '{{__dir__}}/plugins'
+  settings: '{{__dir__}}/settings'
+  project: '{{__dir__}}/project'
+links:
+  - source: '{{assets}}'
+    target: '{{project}}/Assets'
+  - source: '{{plugins}}'
+    target: '{{project}}/Assets/Plugins'
+  - source: '{{settings}}'
+    target: '{{project}}/ProjectSettings'
+
+{% endraw %}

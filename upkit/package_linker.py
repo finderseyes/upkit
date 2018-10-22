@@ -10,18 +10,9 @@ from upkit import utils
 
 
 class PackageLinker(object):
-    def __init__(self, config=None,
-                 params={},
-                 # packages_config=None,
-                 # packages_folder=None,
-                 # params_config=None,
-                 ):
+    def __init__(self, config_file=None, params={}):
         """
-
-        :param config: the config file, will override packages_config and params_config
-        :param packages_config: Nuget packages.config file
-        :param params_config: yaml file containing parameter definitions
-        :param destination: the default link destination folder
+        :param config_file: the config file
         :param params: command-line parameters.
         """
 
@@ -30,8 +21,8 @@ class PackageLinker(object):
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
-        if config:
-            with open(config, 'r') as fh:
+        if config_file:
+            with open(config_file, 'r') as fh:
                 content = fh.read()
 
                 config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
@@ -40,7 +31,7 @@ class PackageLinker(object):
                 params_data = config_data.get('params', {})
                 params.update({
                     '__cwd__': os.path.abspath(os.getcwd()),
-                    '__dir__': os.path.abspath(os.path.dirname(config)),
+                    '__dir__': os.path.abspath(os.path.dirname(config_file)),
                 })
 
                 self._params = copy.deepcopy(params)
