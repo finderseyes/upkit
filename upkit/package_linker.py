@@ -10,18 +10,9 @@ from upkit import utils
 
 
 class PackageLinker(object):
-    def __init__(self, config=None,
-                 params={},
-                 # packages_config=None,
-                 # packages_folder=None,
-                 # params_config=None,
-                 ):
+    def __init__(self, config_file=None, params={}):
         """
-
-        :param config: the config file, will override packages_config and params_config
-        :param packages_config: Nuget packages.config file
-        :param params_config: yaml file containing parameter definitions
-        :param destination: the default link destination folder
+        :param config_file: the config file
         :param params: command-line parameters.
         """
 
@@ -30,8 +21,8 @@ class PackageLinker(object):
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
-        if config:
-            with open(config, 'r') as fh:
+        if config_file:
+            with open(config_file, 'r') as fh:
                 content = fh.read()
 
                 config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
@@ -40,7 +31,7 @@ class PackageLinker(object):
                 params_data = config_data.get('params', {})
                 params.update({
                     '__cwd__': os.path.abspath(os.getcwd()),
-                    '__dir__': os.path.abspath(os.path.dirname(config)),
+                    '__dir__': os.path.abspath(os.path.dirname(config_file)),
                 })
 
                 self._params = copy.deepcopy(params)
@@ -166,11 +157,20 @@ class PackageLinker(object):
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
             else:
+                exclude = package_linkspec.get('exclude', None)
+                exclude_items = set(
+                    p for item in exclude
+                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                ) if exclude else set()
+
                 content_items = [
                     p for item in content
                     for p in glob.glob(os.path.abspath(self._render_template(item, params)))
                 ]
                 for content_item in content_items:
+                    if content_item in exclude_items:
+                        continue
+
                     content_item_name = os.path.basename(content_item)
                     content_item_target = os.path.abspath(os.path.join(target, content_item_name))
                     utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
@@ -185,9 +185,18 @@ class PackageLinker(object):
                     item_source = os.path.abspath(self._render_template(item['source'], params))
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
-                    content_items = [p for item in content for p in
-                                     glob.glob(os.path.abspath(self._render_template(item, params)))]
+                    exclude = item.get('exclude', None)
+                    exclude_items = set(
+                        p for i in exclude
+                        for p in glob.glob(os.path.abspath(self._render_template(i, params)))
+                    ) if exclude else set()
+
+                    content_items = [p for i in content for p in
+                                     glob.glob(os.path.abspath(self._render_template(i, params)))]
                     for content_item in content_items:
+                        if content_item in exclude_items:
+                            continue
+
                         content_item_name = os.path.basename(content_item)
                         content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)

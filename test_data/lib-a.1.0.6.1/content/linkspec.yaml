@@ -1,0 +1,4 @@
+links:
+  - target: '{{__target__}}/child'
+    content: ['{{__dir__}}/child/data[0-2].txt']
+    exclude: ['{{__dir__}}/child/data1.txt']

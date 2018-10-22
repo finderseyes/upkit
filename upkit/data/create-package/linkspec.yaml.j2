@@ -1,0 +1,19 @@
+{%- set assets = '{{assets}}' -%}
+{%- set plugins = '{{plugins}}' -%}
+{%- set __dir__ = '{{__dir__}}' -%}
+{%- set plugin_platforms = [ 'iOS', 'Android', 'x86_64' ] -%}
+links:
+  - target: '{{assets}}'
+    content: ['{{__dir__}}/assets/*']
+    exclude: ['{{__dir__}}/assets/Plugins.*', '{{__dir__}}/assets/Plugins']
+
+  - target: '{{plugins}}'
+    content: ['{{__dir__}}/plugins/*']
+    exclude: [{% for item in plugin_platforms %}
+      '{{__dir__}}/plugins/{{item}}'{{', ' if not loop.last}}{% endfor %}
+      ]
+  {% for item in plugin_platforms %}
+  - target: '{{plugins}}/{{item}}'
+    content: ['{{__dir__}}/plugins/{{item}}/*']
+  {% endfor %}
+
