@@ -94,7 +94,10 @@ class PackageLinker(object):
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
-        self.package_folder = os.path.abspath(package_folder)
+        if package_folder:
+            self.package_folder = os.path.abspath(package_folder)
+        else:
+            self.package_folder = None
 
         if config_file:
             with open(config_file, 'r') as fh:
@@ -116,7 +119,7 @@ class PackageLinker(object):
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    source = self._render_template(i.get('source'), self._params)
                     target_spec = i.get('target', None)
                     target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
                     package_linkspec = i.get('linkspec', None)
