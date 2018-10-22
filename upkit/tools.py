@@ -16,6 +16,9 @@ class LinkPackageCommand(object):
         parser.add_argument('-c', '--config', dest='config',
                             help='Path to link configuration file (config.yaml)')
 
+        parser.add_argument('-w', '--package-folder', dest='package_folder',
+                            help='Path to a folder where dependency packages will be resolved to.')
+
         parser.add_argument('-p', dest='params', action='append',
                             help='Parameters.')
 
@@ -28,7 +31,7 @@ class LinkPackageCommand(object):
             if args.config:
                 args.confg = os.path.abspath(args.config)
 
-            linker = PackageLinker(config_file=args.config, params=params)
+            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder, params=params)
             linker.run()
             print('Package link completed.')
         except:

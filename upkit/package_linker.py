@@ -7,8 +7,26 @@ import yaml
 import yamlordereddictloader
 import xmltodict
 from jinja2 import Template, Environment, meta, TemplateSyntaxError
+from git.repo.base import Repo
 
 from upkit import utils
+
+
+def _normalize_uri(uri):
+    details = ''
+    sub_path = ''
+
+    if '#' in uri:
+        idx = uri.index('#')
+        sub_path = uri[idx + 1:]
+        uri = uri[:idx]
+
+    if '@' in uri:
+        idx = uri.index('@')
+        details = uri[idx + 1:]
+        uri = uri[:idx]
+
+    return uri, details, sub_path
 
 
 class NugetResolver(object):
@@ -18,17 +36,45 @@ class NugetResolver(object):
         self.package_linker = package_linker
 
     def resolve(self, source):
-        (package, version) = source[len(self.scheme):].split('@')
-        sub_path = ''
-        if '/' in version:
-            idx = version.index('/')
-            sub_path = version[idx + 1:]
-            version = version[:idx]
-
+        source = source[len(self.scheme):]
+        package, version, sub_path = _normalize_uri(source)
+        utils.mkdir_p(self.package_linker.package_folder)
         call('nuget install %s -Version %s -OutputDirectory "%s"' % (package, version,
                                                                      self.package_linker.package_folder),
              shell=True)
         return os.path.join(self.package_linker.package_folder, '%s.%s' % (package, version), sub_path)
+
+
+class GitResolver(object):
+    scheme = 'git:'
+
+    def __init__(self, package_linker):
+        self.package_linker = package_linker
+
+    def resolve(self, source):
+        repo_uri = source[len(self.scheme):]
+
+        repo_uri, branch_and_tag, sub_path = _normalize_uri(repo_uri)
+
+        branch = branch_and_tag
+        tag = None
+        if branch_and_tag and ':' in branch_and_tag:
+            idx = branch_and_tag.index(':')
+            tag = branch_and_tag[idx + 1:]
+            branch = branch_and_tag[:idx]
+
+        repo_path = os.path.join(self.package_linker.package_folder, repo_uri.replace(':', '_').replace('/', '_'))
+        utils.mkdir_p(self.package_linker.package_folder)
+
+        if branch:
+            repo = Repo.clone_from(repo_uri, repo_path, branch=branch)
+        else:
+            repo = Repo.clone_from(repo_uri, repo_path)
+
+        if tag:
+            repo.checkout(tag)
+
+        return os.path.join(repo_path, sub_path)
 
 
 class PackageLinker(object):
@@ -38,14 +84,20 @@ class PackageLinker(object):
         :param package_folder: the folder where Nuget and other remote packages will be resolved to.
         :param params: command-line parameters.
         """
-        self.source_resolvers = [ NugetResolver(self) ]
+        self.source_resolvers = [
+            NugetResolver(self),
+            GitResolver(self),
+        ]
 
         self._jinja_environment = Environment()
         self._params = {
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
-        self.package_folder = os.path.abspath(package_folder)
+        if package_folder:
+            self.package_folder = os.path.abspath(package_folder)
+        else:
+            self.package_folder = None
 
         if config_file:
             with open(config_file, 'r') as fh:
@@ -67,7 +119,7 @@ class PackageLinker(object):
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    source = self._render_template(i.get('source'), self._params)
                     target_spec = i.get('target', None)
                     target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
                     package_linkspec = i.get('linkspec', None)

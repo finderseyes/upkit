@@ -20,3 +20,6 @@ links:
 
   - source: '{{dependencies}}/Newtonsoft.Json.11.0.2/lib/net35'
     target: '{{plugins}}/Newtonsoft.Json'
+
+  - source: 'nuget:NuGet.Core@2.14.0'
+    target: '{{plugins}}/NuGet.Core'

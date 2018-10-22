@@ -258,7 +258,7 @@ external_links:
         utils.rmdir(package_folder)
 
         linker = PackageLinker(package_folder=package_folder)
-        linker.link(source='nuget:NuGet.Core@2.14.0/lib', target=output, forced=True)
+        linker.link(source='nuget:NuGet.Core@2.14.0#lib', target=output, forced=True)
         # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
 
         self.assertTrue(os.path.isdir(os.path.join(package_folder, 'Nuget.Core.2.14.0')))
@@ -272,9 +272,82 @@ external_links:
         utils.rmdir(package_folder)
 
         linker = PackageLinker(package_folder=package_folder)
-        linker.link(source='nuget:NuGet.Core@2.14.0/lib/net40-Client', target=output, forced=True)
+        linker.link(source='nuget:NuGet.Core@2.14.0#lib/net40-Client', target=output, forced=True)
         # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
 
         self.assertTrue(os.path.isdir(os.path.join(package_folder, 'Nuget.Core.2.14.0')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'NuGet.Core.Dll')))
+
+    def test_support_git_source(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git',
+                    target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        # self.assertTrue(os.path.isfile(os.path.join(package_folder, 'README.md')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
+
+    def test_support_git_source_and_path(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git#aaa',
+                    target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        # self.assertTrue(os.path.isfile(os.path.join(package_folder, 'README.md')))
+        self.assertTrue(os.path.isfile(os.path.join(output, '111.txt')))
+
+    def test_support_git_source_with_branch(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc',
+                    target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(output, 'ccc')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
+
+    def test_support_git_source_with_branch_and_path(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc#ccc',
+                    target=output, forced=True)
+
+        self.assertTrue(os.path.isfile(os.path.join(output, '333.txt')))
+
+    def test_support_git_source_with_branch_and_tag(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc:tag-1',
+                    target=output, forced=True)
+        # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(output, 'ccc')))
+        self.assertFalse(os.path.isdir(os.path.join(output, 'eee')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
 
