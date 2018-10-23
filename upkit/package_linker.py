@@ -22,7 +22,15 @@ def _normalize_uri(uri):
         uri = uri[:idx]
 
     if '@' in uri:
-        idx = uri.index('@')
+        prefixes = ('git@', )
+        idx = len(uri)
+
+        for prefix in prefixes:
+            plen = len(prefix)
+            if '@' in uri[plen:]:
+                idx = uri.index('@', plen)
+                break
+
         details = uri[idx + 1:]
         uri = uri[:idx]
 
