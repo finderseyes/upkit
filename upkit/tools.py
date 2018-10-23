@@ -1,35 +1,26 @@
 import argparse
 import os
+import shutil
 import sys
 import traceback
+
+from jinja2 import Environment, PackageLoader, select_autoescape, Template
 
 from upkit import utils
 
 
 class LinkPackageCommand(object):
+    help = 'Link packages with given configs'
+
     def build_argument_parser(self, parser):
-        parser.add_argument('-c', '--config', dest='config',
+        parser.add_argument('-c', '--config', dest='config', default='upkit.yaml',
                             help='Path to link configuration file (config.yaml)')
 
-        # parser.add_argument('--packages-config', dest='packages_config',
-        #                     help='Path to Nuget packages.config file')
-        # parser.add_argument('--packages-folder', dest='packages_folder',
-        #                     help='Path to folder containg Nuget packages')
-        #
-        # parser.add_argument('--params-config', dest='params_config',
-        #                     help='Path to link parameter file (params.yml)')
-
-        # parser.add_argument('-d', '--destination', dest='destination', required=True,
-        #                     help='Path to destination folder containing target links.')
+        parser.add_argument('-w', '--package-folder', dest='package_folder',
+                            help='Path to a folder where dependency packages will be resolved to.')
 
         parser.add_argument('-p', dest='params', action='append',
                             help='Parameters.')
-
-        # parser.add_argument('-p', '--package-dir', dest='packageDir', required=True,
-        #                     help='Path to the directory where Nuget packages are installed')
-        # parser.add_argument('-l', '--link-dir', dest='linkDir', required=True,
-        #                     help='Path to the directory where links to Nuget packages are created')
-        # parser.add_argument('-r', '--params', dest='params', required=False, help='Path to XML parameter file')
 
     def run(self, args):
         from upkit.package_linker import PackageLinker
@@ -40,24 +31,7 @@ class LinkPackageCommand(object):
             if args.config:
                 args.confg = os.path.abspath(args.config)
 
-            # if args.packages_config:
-            #     args.packages_config = os.path.abspath(args.packages_config)
-            #
-            # if args.packages_folder:
-            #     args.packages_folder = os.path.abspath(args.packages_folder)
-            #
-            # if args.params_config:
-            #     args.params_config = os.path.abspath(args.params_config)
-
-            linker = PackageLinker(
-                config=args.config,
-                params=params,
-                # packages_config=args.packages_config,
-                # packages_folder=args.packages_folder,
-                # params_config=args.params_config,
-                # destination=args.destination,
-
-            )
+            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder, params=params)
             linker.run()
             print('Package link completed.')
         except:
@@ -66,10 +40,81 @@ class LinkPackageCommand(object):
             sys.exit(1)
 
 
+class CreatePackageCommand(object):
+    help = 'Create a package.'
+
+    def __init__(self):
+        self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'data'))
+        self.env = Environment(
+            loader=PackageLoader('upkit', 'data/create-package'),
+            autoescape=select_autoescape(['html', 'xml', 'nuspec'])
+        )
+
+    def build_argument_parser(self, parser):
+        parser.add_argument('location', help='Package location')
+        parser.add_argument('--link', action='store_const', const=True,
+                            help='Link and create package Unity project after created')
+
+    def run(self, args):
+        try:
+            if os.path.exists(args.location):
+                if os.path.isfile(args.location) or os.listdir(args.location):
+                    raise RuntimeError('"%s" must be an empty folder.' % args.location)
+            else:
+                os.mkdir(args.location)
+
+            os.mkdir(os.path.join(args.location, 'assets'))
+            os.mkdir(os.path.join(args.location, 'plugins'))
+            os.mkdir(os.path.join(args.location, 'settings'))
+            os.mkdir(os.path.join(args.location, 'project'))
+
+            # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')
+            if True:
+                template = self.env.get_template('upkit.yaml.j2')
+                file_path = os.path.join(args.location, 'upkit.yaml')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('linkspec.yaml.j2')
+                file_path = os.path.join(args.location, 'linkspec.yaml')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('git-ignore.j2')
+                file_path = os.path.join(args.location, '.gitignore')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+
+            if True:
+                template = self.env.get_template('package.nuspec.j2')
+                file_path = os.path.join(args.location, 'package.nuspec')
+                with open(file_path, 'w') as writer:
+                    data = template.render()
+                    writer.write(data.encode('utf-8'))
+            print('Package created.')
+
+            if hasattr(args, 'link') and args.link:
+                from upkit.package_linker import PackageLinker
+                linker = PackageLinker(config_file=os.path.abspath(os.path.join(args.location, 'upkit.yaml')))
+                linker.run()
+                print('Package link completed.')
+
+        except:
+            print('Creating package failed with errors.')
+            print(traceback.format_exc())
+            sys.exit(1)
+
+
 class UnityTools(object):
     def __init__(self):
         self._commands = {
             'link': LinkPackageCommand(),
+            'create-package': CreatePackageCommand(),
         }
 
     def run(self):
@@ -84,9 +129,9 @@ class UnityTools(object):
         subparsers = parser.add_subparsers(help='Tool command to execute')
 
         for k, v in self._commands.items():
-            command_parser = subparsers.add_parser(k, help='Link packages with given configs')
+            command_parser = subparsers.add_parser(k, help=v.help)
             v.build_argument_parser(command_parser)
-            command_parser.set_defaults(func=lambda a: v.run(a))
+            command_parser.set_defaults(func=v.run)
 
         args = parser.parse_args()
         if hasattr(args, 'func'):
@@ -98,5 +143,9 @@ class UnityTools(object):
 def execute_from_command_line():
     tools = UnityTools()
     tools.run()
+
+
+if __name__ == "__main__":
+    execute_from_command_line()
 
 

@@ -1,37 +1,136 @@
 import glob
 import copy
 import os
+from subprocess import call
+
 import yaml
 import yamlordereddictloader
 import xmltodict
 from jinja2 import Template, Environment, meta, TemplateSyntaxError
+from git.repo.base import Repo
 
 from upkit import utils
 
 
-class PackageLinker(object):
-    def __init__(self, config=None,
-                 params={},
-                 # packages_config=None,
-                 # packages_folder=None,
-                 # params_config=None,
-                 ):
-        """
+def _normalize_uri(uri):
+    details = ''
+    sub_path = ''
 
-        :param config: the config file, will override packages_config and params_config
-        :param packages_config: Nuget packages.config file
-        :param params_config: yaml file containing parameter definitions
-        :param destination: the default link destination folder
+    if '#' in uri:
+        idx = uri.index('#')
+        sub_path = uri[idx + 1:]
+        uri = uri[:idx]
+
+    if '@' in uri:
+        idx = uri.index('@')
+        details = uri[idx + 1:]
+        uri = uri[:idx]
+
+    return uri, details, sub_path
+
+
+class NugetResolver(object):
+    scheme = 'nuget:'
+
+    def __init__(self, package_linker):
+        self.package_linker = package_linker
+
+    def resolve(self, source):
+        source = source[len(self.scheme):]
+        package, version, sub_path = _normalize_uri(source)
+        utils.mkdir_p(self.package_linker.package_folder)
+        call('nuget install %s -Version %s -OutputDirectory "%s"' % (package, version,
+                                                                     self.package_linker.package_folder),
+             shell=True)
+        return os.path.join(self.package_linker.package_folder, '%s.%s' % (package, version), sub_path)
+
+
+class GitResolver(object):
+    scheme = 'git:'
+
+    def __init__(self, package_linker):
+        self.package_linker = package_linker
+
+    def resolve(self, source):
+        repo_uri = source[len(self.scheme):]
+
+        repo_uri, branch_or_tag, sub_path = _normalize_uri(repo_uri)
+
+        # branch = branch_or_tag
+        # tag = None
+        # if branch_or_tag and ':' in branch_or_tag:
+        #     idx = branch_or_tag.index(':')
+        #     tag = branch_or_tag[idx + 1:]
+        #     branch = branch_or_tag[:idx]
+
+        repo_id = repo_uri
+        if branch_or_tag:
+            repo_id = '%s.%s' % (repo_uri, branch_or_tag)
+
+        repo_id = repo_id.replace('.', '_').replace(':', '_').replace('/', '_')
+        repo_path = os.path.join(self.package_linker.package_folder, repo_id)
+        utils.mkdir_p(self.package_linker.package_folder)
+
+        # Check if the repo already exists
+        repo = None
+        if os.path.isdir(repo_path):
+            try:
+                repo = Repo(repo_path)
+                if not hasattr(repo.remotes, 'origin') or not repo_uri == repo.remotes.origin.url:
+                    raise RuntimeError('Invalid existing repository %s' % repo_path)
+                else:
+                    repo.remotes.origin.pull()
+            except:
+                utils.rmdir(repo_path)
+                repo = None
+
+        # the repository does not exist.
+        if not repo:
+            repo = Repo.clone_from(repo_uri, repo_path)
+
+        self._swith_branch_or_tag(repo, branch_or_tag)
+
+        return os.path.join(repo_path, sub_path)
+
+    def _swith_branch_or_tag(self, repo, branch_or_tag):
+        if not branch_or_tag:
+            return
+
+        if hasattr(repo.remotes.origin.refs, branch_or_tag):
+            branch = repo.remotes.origin.refs[branch_or_tag]
+            branch.checkout()
+        elif hasattr(repo.tags, branch_or_tag):
+            tag_ref = repo.tags[branch_or_tag]
+            tag_branch = repo.create_head(branch_or_tag, tag_ref.commit)
+            tag_branch.checkout()
+        else:
+            raise ValueError('"%s" is not a valid branch or tag.' % branch_or_tag)
+
+
+class PackageLinker(object):
+    def __init__(self, config_file=None, package_folder=None, params={}):
+        """
+        :param config_file: the config file
+        :param package_folder: the folder where Nuget and other remote packages will be resolved to.
         :param params: command-line parameters.
         """
+        self.source_resolvers = [
+            NugetResolver(self),
+            GitResolver(self),
+        ]
 
         self._jinja_environment = Environment()
         self._params = {
             '__cwd__': os.path.abspath(os.getcwd()),
         }
 
-        if config:
-            with open(config, 'r') as fh:
+        if package_folder:
+            self.package_folder = os.path.abspath(package_folder)
+        else:
+            self.package_folder = None
+
+        if config_file:
+            with open(config_file, 'r') as fh:
                 content = fh.read()
 
                 config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
@@ -40,7 +139,7 @@ class PackageLinker(object):
                 params_data = config_data.get('params', {})
                 params.update({
                     '__cwd__': os.path.abspath(os.getcwd()),
-                    '__dir__': os.path.abspath(os.path.dirname(config)),
+                    '__dir__': os.path.abspath(os.path.dirname(config_file)),
                 })
 
                 self._params = copy.deepcopy(params)
@@ -50,7 +149,7 @@ class PackageLinker(object):
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    source = os.path.abspath(self._render_template(i.get('source'), self._params))
+                    source = self._render_template(i.get('source'), self._params)
                     target_spec = i.get('target', None)
                     target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
                     package_linkspec = i.get('linkspec', None)
@@ -98,6 +197,16 @@ class PackageLinker(object):
             #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
             #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
+    def _try_resolve(self, source):
+        normalized_source = source.strip()
+        for resolver in self.source_resolvers:
+            if not normalized_source.startswith(resolver.scheme):
+                continue
+            return resolver.resolve(normalized_source)
+
+        # fallback to file resolver.
+        return utils.realpath(source)
+
     def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
             if k not in exclude:
@@ -139,7 +248,7 @@ class PackageLinker(object):
         if not source:
             raise ValueError('Missing required "source" parameter.')
 
-        source = utils.realpath(source)
+        source = self._try_resolve(source)
 
         # utils.fs_link(source, target)
         if not package_linkspec:
@@ -166,11 +275,20 @@ class PackageLinker(object):
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
             else:
+                exclude = package_linkspec.get('exclude', None)
+                exclude_items = set(
+                    p for item in exclude
+                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                ) if exclude else set()
+
                 content_items = [
                     p for item in content
                     for p in glob.glob(os.path.abspath(self._render_template(item, params)))
                 ]
                 for content_item in content_items:
+                    if content_item in exclude_items:
+                        continue
+
                     content_item_name = os.path.basename(content_item)
                     content_item_target = os.path.abspath(os.path.join(target, content_item_name))
                     utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
@@ -185,9 +303,18 @@ class PackageLinker(object):
                     item_source = os.path.abspath(self._render_template(item['source'], params))
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
-                    content_items = [p for item in content for p in
-                                     glob.glob(os.path.abspath(self._render_template(item, params)))]
+                    exclude = item.get('exclude', None)
+                    exclude_items = set(
+                        p for i in exclude
+                        for p in glob.glob(os.path.abspath(self._render_template(i, params)))
+                    ) if exclude else set()
+
+                    content_items = [p for i in content for p in
+                                     glob.glob(os.path.abspath(self._render_template(i, params)))]
                     for content_item in content_items:
+                        if content_item in exclude_items:
+                            continue
+
                         content_item_name = os.path.basename(content_item)
                         content_item_target = os.path.abspath(os.path.join(item_target, content_item_name))
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)

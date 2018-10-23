@@ -2,7 +2,7 @@
 
 `upkit` is a command line toolkit that helps you create/organize your Unity3D projects and manage their dependencies. 
 
-_If you are in a hurry, go to [Getting Started](##getting-tarted) to see it in action, otherwise, take a few minutes reading the following section to see what problems it tries to solve._
+_If you are in a hurry, go to [Getting Started](#getting-started) to see it in action, otherwise, take a few minutes reading the following section to see what problems it tries to solve._
 
 ## Why should you use it? 
 
@@ -30,7 +30,7 @@ In particular, `upkit` provides the following main features:
 
 These instructions will create a simple Unity3D project with a Nuget dependency (Newtonsoft.Json) using `upkit`.
 
-_The source code to this project can be also found under [`examples/appkit`](#https://github.com/finderseyes/upkit/tree/develop/examples/appkit)._
+The source code to this project can be also found under [`examples/appkit`](https://github.com/finderseyes/upkit/tree/develop/examples/appkit).
 
 ### Prerequisites
 
@@ -42,7 +42,7 @@ For this example, you will also need `nuget` to resolve Nuget dependencies.
 Run the following command to install `upkit` from Github repository.
 
 ```
-$ pip install git+https://github.com/finderseyes/upkit.git
+$ pip install upkit
 ```
 
 ### Create the project structure
@@ -124,7 +124,7 @@ upkit link -c project-config.yaml -p platform=android
 ```
 
 ### Generate Unity projects
-It's simple, just run the `initialize.sh` script. There will be two newly created project folders under, namely `appkit-ios` and `appkit-android`. Open these folder as Unity project and voilà. 
+It's simple, just run `initialize.sh` script. There will be two new folders, namely `appkit-ios` and `appkit-android`, under `unity-projects`. Open these folder in Unity and voilà, ready to go.
 ```
 (project)/
 ├── unity-projects/

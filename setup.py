@@ -20,8 +20,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/finderseyes/upkit',
-    packages=setuptools.find_packages(),
-    install_requires=['xmltodict', 'pyyaml', 'yamlordereddictloader', 'jinja2',],
+    packages=['upkit'],
+    package_dir={'upkit': 'upkit'},
+    package_data={'upkit': ['data/**/*']},
+    install_requires=['xmltodict', 'pyyaml', 'yamlordereddictloader', 'jinja2', 'gitpython', ],
     classifiers=[
         'Programming Language :: Python :: 2',
         'License :: OSI Approved :: MIT License',
