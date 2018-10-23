@@ -18,7 +18,7 @@ class CreatePackageCommandTestCase(unittest.TestCase):
         command.run(args)
 
         self.assertTrue(os.path.isdir(output))
-        self.assertTrue(os.path.isfile(os.path.join(output, 'package-config.yaml')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'upkit.yaml')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'linkspec.yaml')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'package.nuspec')))
         # self.assertTrue(os.path.isdir(os.path.join(output, 'project')))
@@ -37,7 +37,7 @@ class CreatePackageCommandTestCase(unittest.TestCase):
         command.run(args)
 
         self.assertTrue(os.path.isdir(output))
-        self.assertTrue(os.path.isfile(os.path.join(output, 'package-config.yaml')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'upkit.yaml')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'linkspec.yaml')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'package.nuspec')))
         # self.assertTrue(os.path.isdir(os.path.join(output, 'project')))
@@ -56,7 +56,7 @@ class CreatePackageCommandTestCase(unittest.TestCase):
             args = args_type(location=output)
             command.run(args)
 
-        self.assertFalse(os.path.isfile(os.path.join(output, 'package-config.yaml')))
+        self.assertFalse(os.path.isfile(os.path.join(output, 'upkit.yaml')))
         self.assertFalse(os.path.isfile(os.path.join(output, 'linkspec.yaml')))
         self.assertFalse(os.path.isfile(os.path.join(output, 'package.nuspec')))
 
