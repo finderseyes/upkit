@@ -36,8 +36,12 @@ class NugetResolver(object):
         self.package_linker = package_linker
 
     def resolve(self, source):
+        if not self.package_linker.package_folder:
+            raise ValueError('"package_folder" is required but not specified, see -w parameter.')
+
         source = source[len(self.scheme):]
         package, version, sub_path = _normalize_uri(source)
+
         utils.mkdir_p(self.package_linker.package_folder)
         call('nuget install %s -Version %s -OutputDirectory "%s"' % (package, version,
                                                                      self.package_linker.package_folder),
@@ -52,6 +56,9 @@ class GitResolver(object):
         self.package_linker = package_linker
 
     def resolve(self, source):
+        if not self.package_linker.package_folder:
+            raise ValueError('"package_folder" is required but not specified, see -w parameter.')
+        
         repo_uri = source[len(self.scheme):]
 
         repo_uri, branch_or_tag, sub_path = _normalize_uri(repo_uri)
@@ -202,10 +209,10 @@ class PackageLinker(object):
         for resolver in self.source_resolvers:
             if not normalized_source.startswith(resolver.scheme):
                 continue
-            return resolver.resolve(normalized_source)
+            return resolver.resolve(normalized_source), resolver
 
         # fallback to file resolver.
-        return utils.realpath(source)
+        return utils.realpath(source), None
 
     def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
@@ -248,18 +255,19 @@ class PackageLinker(object):
         if not source:
             raise ValueError('Missing required "source" parameter.')
 
-        source = self._try_resolve(source)
+        source, resolver = self._try_resolve(source)
 
         # utils.fs_link(source, target)
+        linkspec_path = None
         if not package_linkspec:
-            package_linkspec = self.read_package_linkspec(source)
+            package_linkspec, linkspec_path = self.read_package_linkspec(source)
 
         # make a copy of the dict
         params = copy.deepcopy(params)
         if source:
             params['__source__'] = source
             if set_dir:
-                params['__dir__'] = source
+                params['__dir__'] = source if not linkspec_path else os.path.dirname(linkspec_path)
 
         if target:
             target = os.path.abspath(target)
@@ -345,21 +353,28 @@ class PackageLinker(object):
         :param source: the folder containing linkspec file
         :return: a linkspec dictionary or empty dictionary.
         """
-        linkspec = self._read_linkspec_yaml_file(source)
-        linkspec = self._read_package_linkspec_file(source) if not linkspec else linkspec
+        linkspec, path = self._read_linkspec_yaml_file(source)
+        # linkspec = self._read_package_linkspec_file(source) if not linkspec else linkspec
         linkspec = {} if not linkspec else linkspec
-        return linkspec
+        return linkspec, path
 
     def _read_linkspec_yaml_file(self, source):
         file = os.path.join(source, 'linkspec.yaml')
         if not os.path.isfile(file):
             file = os.path.join(source, 'linkspec.yml')
-            if not os.path.isfile(file):
-                return None
+
+        if not os.path.isfile(file):
+            file = os.path.join(source, 'content', 'linkspec.yaml')
+
+        if not os.path.isfile(file):
+            file = os.path.join(source, 'content', 'linkspec.yml')
+
+        if not os.path.isfile(file):
+            return None, None
 
         with open(file, 'r') as fh:
             content = fh.read()
-            return yaml.load(content, Loader=yamlordereddictloader.Loader)
+            return yaml.load(content, Loader=yamlordereddictloader.Loader), file
 
     def _read_package_linkspec_file(self, source):
         file = os.path.join(source, 'package.linkspec')
