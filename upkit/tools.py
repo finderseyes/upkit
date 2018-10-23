@@ -13,7 +13,7 @@ class LinkPackageCommand(object):
     help = 'Link packages with given configs'
 
     def build_argument_parser(self, parser):
-        parser.add_argument('-c', '--config', dest='config',
+        parser.add_argument('-c', '--config', dest='config', default='upkit.yaml',
                             help='Path to link configuration file (config.yaml)')
 
         parser.add_argument('-w', '--package-folder', dest='package_folder',
@@ -70,8 +70,8 @@ class CreatePackageCommand(object):
 
             # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')
             if True:
-                template = self.env.get_template('package-config.yaml.j2')
-                file_path = os.path.join(args.location, 'package-config.yaml')
+                template = self.env.get_template('upkit.yaml.j2')
+                file_path = os.path.join(args.location, 'upkit.yaml')
                 with open(file_path, 'w') as writer:
                     data = template.render()
                     writer.write(data.encode('utf-8'))
@@ -98,9 +98,9 @@ class CreatePackageCommand(object):
                     writer.write(data.encode('utf-8'))
             print('Package created.')
 
-            if args.link:
+            if hasattr(args, 'link') and args.link:
                 from upkit.package_linker import PackageLinker
-                linker = PackageLinker(config_file=os.path.abspath(os.path.join(args.location, 'package-config.yaml')))
+                linker = PackageLinker(config_file=os.path.abspath(os.path.join(args.location, 'upkit.yaml')))
                 linker.run()
                 print('Package link completed.')
 
