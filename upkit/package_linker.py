@@ -54,27 +54,57 @@ class GitResolver(object):
     def resolve(self, source):
         repo_uri = source[len(self.scheme):]
 
-        repo_uri, branch_and_tag, sub_path = _normalize_uri(repo_uri)
+        repo_uri, branch_or_tag, sub_path = _normalize_uri(repo_uri)
 
-        branch = branch_and_tag
-        tag = None
-        if branch_and_tag and ':' in branch_and_tag:
-            idx = branch_and_tag.index(':')
-            tag = branch_and_tag[idx + 1:]
-            branch = branch_and_tag[:idx]
+        # branch = branch_or_tag
+        # tag = None
+        # if branch_or_tag and ':' in branch_or_tag:
+        #     idx = branch_or_tag.index(':')
+        #     tag = branch_or_tag[idx + 1:]
+        #     branch = branch_or_tag[:idx]
 
-        repo_path = os.path.join(self.package_linker.package_folder, repo_uri.replace(':', '_').replace('/', '_'))
+        repo_id = repo_uri
+        if branch_or_tag:
+            repo_id = '%s.%s' % (repo_uri, branch_or_tag)
+
+        repo_id = repo_id.replace('.', '_').replace(':', '_').replace('/', '_')
+        repo_path = os.path.join(self.package_linker.package_folder, repo_id)
         utils.mkdir_p(self.package_linker.package_folder)
 
-        if branch:
-            repo = Repo.clone_from(repo_uri, repo_path, branch=branch)
-        else:
+        # Check if the repo already exists
+        repo = None
+        if os.path.isdir(repo_path):
+            try:
+                repo = Repo(repo_path)
+                if not hasattr(repo.remotes, 'origin') or not repo_uri == repo.remotes.origin.url:
+                    raise RuntimeError('Invalid existing repository %s' % repo_path)
+                else:
+                    repo.remotes.origin.pull()
+            except:
+                utils.rmdir(repo_path)
+                repo = None
+
+        # the repository does not exist.
+        if not repo:
             repo = Repo.clone_from(repo_uri, repo_path)
 
-        if tag:
-            repo.checkout(tag)
+        self._swith_branch_or_tag(repo, branch_or_tag)
 
         return os.path.join(repo_path, sub_path)
+
+    def _swith_branch_or_tag(self, repo, branch_or_tag):
+        if not branch_or_tag:
+            return
+
+        if hasattr(repo.remotes.origin.refs, branch_or_tag):
+            branch = repo.remotes.origin.refs[branch_or_tag]
+            branch.checkout()
+        elif hasattr(repo.tags, branch_or_tag):
+            tag_ref = repo.tags[branch_or_tag]
+            tag_branch = repo.create_head(branch_or_tag, tag_ref.commit)
+            tag_branch.checkout()
+        else:
+            raise ValueError('"%s" is not a valid branch or tag.' % branch_or_tag)
 
 
 class PackageLinker(object):

@@ -335,7 +335,7 @@ external_links:
 
         self.assertTrue(os.path.isfile(os.path.join(output, '333.txt')))
 
-    def test_support_git_source_with_branch_and_tag(self):
+    def test_support_git_source_with_tag(self):
         output = '../temp/output/lib-a'
         package_folder = '../temp/output/packages'
 
@@ -343,11 +343,49 @@ external_links:
         utils.rmdir(package_folder)
 
         linker = PackageLinker(package_folder=package_folder)
-        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc:tag-1',
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@tag-1',
                     target=output, forced=True)
         # linker.link(source='git:http://NuGet.Core@2.14.0', target=output, forced=True)
 
         self.assertTrue(os.path.isdir(os.path.join(output, 'ccc')))
         self.assertFalse(os.path.isdir(os.path.join(output, 'eee')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
+
+    def test_support_git_source_if_already_cloned(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git',
+                    target=output, forced=True)
+
+        # link again, with existing package folder
+        utils.rmdir(output)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git',
+                    target=output, forced=True)
+
+        self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
+
+    def test_support_git_source_with_branch_if_already_cloned(self):
+        output = '../temp/output/lib-a'
+        package_folder = '../temp/output/packages'
+
+        utils.rmdir(output)
+        utils.rmdir(package_folder)
+
+        linker = PackageLinker(package_folder=package_folder)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc',
+                    target=output, forced=True)
+
+        # link again, with existing package folder
+        utils.rmdir(output)
+        linker.link(source='git:https://bitbucket.org/tuongvu/upkit-test-package.git@feature/ccc',
+                    target=output, forced=True)
+
+        self.assertTrue(os.path.isdir(os.path.join(output, 'ccc')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
+
 
