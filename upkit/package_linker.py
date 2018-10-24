@@ -122,13 +122,39 @@ class GitResolver(object):
             raise ValueError('"%s" is not a valid branch or tag.' % branch_or_tag)
 
 
+class UnityProjectLinkTemplate(object):
+    """
+
+    """
+    project_param_name = 'project'
+
+    def expand_params(self, params):
+        if self.project_param_name not in params:
+            raise ValueError('Missing required parameter "%s"' % self.project_param_name)
+
+        project = params[self.project_param_name]
+        assets = os.path.abspath(os.path.join(project, 'Assets'))
+        plugins = os.path.abspath(os.path.join(assets, 'Plugins'))
+
+        params.update({
+            '__project__': project,
+            '__assets__': assets,
+            '__plugins__': plugins,
+        })
+
+    def pre_run(self, package_linker):
+        utils.mkdir_p(package_linker.params['__plugins__'])
+
+
 class PackageLinker(object):
-    def __init__(self, config_file=None, package_folder=None, params={}):
+    def __init__(self, config_file=None, package_folder=None, link_template=None, params={}):
         """
         :param config_file: the config file
         :param package_folder: the folder where Nuget and other remote packages will be resolved to.
         :param params: command-line parameters.
         """
+        self._link_template = link_template
+
         self.source_resolvers = [
             NugetResolver(self),
             GitResolver(self),
@@ -160,19 +186,27 @@ class PackageLinker(object):
                 self._params = copy.deepcopy(params)
                 self._expand_params(params_data, exclude=params)
 
+                if self._link_template:
+                    self._link_template.expand_params(self._params)
+
                 # links
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    source = self._render_template(i.get('source'), self._params)
-                    target_spec = i.get('target', None)
-                    target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
-                    package_linkspec = i.get('linkspec', None)
+                    # source_spec = i.get('source', None)
+                    # source = self._render_template(source_spec, self._params) if source_spec else None
+                    #
+                    # target_spec = i.get('target', None)
+                    # target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
 
                     return {
-                        'source': source,
-                        'target': target,
-                        'linkspec': package_linkspec,
+                        'source': i.get('source', None),
+                        'target': i.get('target', None),
+                        'content': i.get('content', None),
+                        'exclude': i.get('exclude', None),
+                        'links': i.get('links', None),
+                        'external_links': i.get('external_links', None),
+                        # 'linkspec': package_linkspec,
                     }
 
                 self._links = [_to_link(item) for item in links_data]
@@ -212,15 +246,23 @@ class PackageLinker(object):
             #         self._links = [_to_link(item, packages_folder, os.path.abspath(destination))
             #                        for item in utils.guaranteed_list(packages_data['packages']['package'])]
 
-    def _try_resolve(self, source):
-        normalized_source = source.strip()
-        for resolver in self.source_resolvers:
-            if not normalized_source.startswith(resolver.scheme):
-                continue
+    def _try_resolve_source(self, source):
+        resolver = self._get_source_resolver(source)
+
+        if resolver:
+            normalized_source = source.strip()
             return resolver.resolve(normalized_source), resolver
 
         # fallback to file resolver.
         return utils.realpath(source), None
+
+    def _get_source_resolver(self, source):
+        normalized_source = source.strip()
+        for resolver in self.source_resolvers:
+            if not normalized_source.startswith(resolver.scheme):
+                continue
+            return resolver
+        return None
 
     def _expand_params(self, params_data, exclude={}):
         for k, item in params_data.items():
@@ -240,58 +282,87 @@ class PackageLinker(object):
         except TemplateSyntaxError as err:
             raise ValueError('Syntax error at "%s", error: %s' % (template, str(err)))
 
+    def get_links(self):
+        return self._links
+
+    def get_params(self):
+        return self._params
+
+    links = property(get_links)
+    params = property(get_params)
+
     def run(self):
+        if self._link_template:
+            self._link_template.pre_run(self)
+
         for link in self._links:
             self.link(source=link['source'],
                       target=link['target'],
-                      package_linkspec=link['linkspec'],
+                      content=link['content'],
+                      links=link['links'],
                       forced=True,
                       set_dir=('__dir__' in self._params),
                       params=self._params)
 
-    def link(self, source=None, target=None, forced=False, package_linkspec=None, set_dir=True, params={}):
+    def link(self, source=None, target=None, content=None, exclude=None, links=None, external_links=None,
+             forced=False, set_dir=True, params={}):
         """
         Link a source folder to a sub-folder in destination folder using given name.
         :param source:
         :param target:
         :param forced:
-        :param package_linkspec:
         :param set_dir:
         :param params:
         :return:
         """
-        if not source:
-            raise ValueError('Missing required "source" parameter.')
 
-        source, resolver = self._try_resolve(source)
+        # Priority: links > content > source
+        if not source and not content and not links:
+            raise ValueError(
+                'Either "source", "content" or "links" must be defined.'
+            )
 
-        # utils.fs_link(source, target)
         linkspec_path = None
-        if not package_linkspec:
-            package_linkspec, linkspec_path = self.read_package_linkspec(source)
+        package_linkspec = {}
 
         # make a copy of the dict
         params = copy.deepcopy(params)
+
         if source:
+            resolver = self._get_source_resolver(source)
+            if not resolver:
+                source = os.path.abspath(self._render_template(source, params))
+            else:
+                source = resolver.resolve(source)
+
+            # Try to resolve package linkspec.
+            package_linkspec, linkspec_path = self.read_package_linkspec(source)
+
             params['__source__'] = source
-            if set_dir:
+            if set_dir and linkspec_path:
                 params['__dir__'] = source if not linkspec_path else os.path.dirname(linkspec_path)
 
+            # Package pre-define linkspec will be overwritten if one of these attributes are defined.
+            if not content and not links and not external_links and not exclude:
+                content = package_linkspec.get('content', content)
+                links = package_linkspec.get('links', links)
+                exclude = package_linkspec.get('exclude', exclude)
+                external_links = package_linkspec.get('external_links', external_links)
+                target = package_linkspec.get('target', target)
+
         if target:
-            target = os.path.abspath(target)
+            target = os.path.abspath(self._render_template(target, params))
             params['__target__'] = target
 
         # child packages
-        child_packages = package_linkspec.get('links', None)
+        child_packages = links
         if not child_packages:
             if not target:
-                raise ValueError('Missing parameter "target" but no links can be found in the linkspec.')
+                raise ValueError('"target" is undefined but no links can be found in the linkspec.')
 
-            content = package_linkspec.get('content', None)
             if not content:
                 utils.fs_link(source, target, hard_link=True, forced=forced)
             else:
-                exclude = package_linkspec.get('exclude', None)
                 exclude_items = set(
                     p for item in exclude
                     for p in glob.glob(os.path.abspath(self._render_template(item, params)))
@@ -336,7 +407,7 @@ class PackageLinker(object):
                         utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
 
         # external packages
-        external_packages = package_linkspec.get('external_links', None)
+        external_packages = external_links
         if external_packages:
             for item in external_packages:
                 item_source = os.path.abspath(self._render_template(item['source'], params))
