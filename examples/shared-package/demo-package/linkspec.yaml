@@ -1,0 +1,24 @@
+links:
+  # Link the package assets under "DemoPackage"
+  - target: '{{__assets__}}/DemoPackage'
+    content: ['{{__dir__}}/assets/*']
+
+
+  - target: '{{__plugins__}}'
+    content: ['{{__dir__}}/plugins/*']
+    exclude: [
+      '{{__dir__}}/plugins/iOS', 
+      '{{__dir__}}/plugins/Android', 
+      '{{__dir__}}/plugins/x86_64'
+      ]
+
+  
+  - target: '{{__plugins__}}/iOS'
+    content: ['{{__dir__}}/plugins/iOS/*']
+  
+  - target: '{{__plugins__}}/Android'
+    content: ['{{__dir__}}/plugins/Android/*']
+  
+  - target: '{{__plugins__}}/x86_64'
+    content: ['{{__dir__}}/plugins/x86_64/*']
+  
