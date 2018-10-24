@@ -13,7 +13,7 @@ class LinkPackageCommand(object):
     help = 'Link packages with given configs'
 
     def build_argument_parser(self, parser):
-        parser.add_argument('-c', '--config', dest='config', default='upkit.yaml',
+        parser.add_argument(dest='config', default='upkit.yaml', nargs='?',
                             help='Path to link configuration file (config.yaml)')
 
         parser.add_argument('-w', '--package-folder', dest='package_folder',
@@ -47,7 +47,7 @@ class CreatePackageCommand(object):
     help = 'Create a package.'
 
     def __init__(self):
-        self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'data'))
+        # self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data'))
         self.env = Environment(
             loader=PackageLoader('upkit', 'data/create-package'),
             autoescape=select_autoescape(['html', 'xml', 'nuspec'])
@@ -69,6 +69,7 @@ class CreatePackageCommand(object):
             os.mkdir(os.path.join(args.location, 'assets'))
             os.mkdir(os.path.join(args.location, 'plugins'))
             os.mkdir(os.path.join(args.location, 'settings'))
+            os.mkdir(os.path.join(args.location, 'packages'))
             os.mkdir(os.path.join(args.location, 'project'))
 
             # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')

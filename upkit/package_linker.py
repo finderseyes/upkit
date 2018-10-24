@@ -153,8 +153,10 @@ class PackageLinker(object):
         :param package_folder: the folder where Nuget and other remote packages will be resolved to.
         :param params: command-line parameters.
         """
-        self._link_template = link_template
 
+        self._data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data'))
+
+        self._link_template = link_template
         self.source_resolvers = [
             NugetResolver(self),
             GitResolver(self),
@@ -265,6 +267,9 @@ class PackageLinker(object):
         return None
 
     def _expand_params(self, params_data, exclude={}):
+        # upkit_plugin = os.path.join(self._data_folder, 'unity-plugin')
+        # self._params['__upkit_plugin__'] = upkit_plugin
+
         for k, item in params_data.items():
             if k not in exclude:
                 self._params[k] = self._render_template(item, self._params)
@@ -299,6 +304,7 @@ class PackageLinker(object):
             self.link(source=link['source'],
                       target=link['target'],
                       content=link['content'],
+                      exclude=link['exclude'],
                       links=link['links'],
                       forced=True,
                       set_dir=('__dir__' in self._params),

@@ -1,17 +1,16 @@
-{%- set assets = '{{assets}}' -%}
-{%- set plugins = '{{plugins}}' -%}
-{%- set project = '{{project}}' -%}
-{%- set settings = '{{settings}}' -%}
 {%- set __dir__ = '{{__dir__}}' -%}
+{%- set __project__ = '{{__project__}}' -%}
+{%- set __assets__ = '{{__assets__}}' -%}
+{%- set __plugins__ = '{{__plugins__}}' -%}
 params:
-  assets: '{{__dir__}}/assets'
-  plugins: '{{__dir__}}/plugins'
-  settings: '{{__dir__}}/settings'
   project: '{{__dir__}}/project'
+  
 links:
-  - source: '{{assets}}'
-    target: '{{project}}/Assets'
-  - source: '{{plugins}}'
-    target: '{{project}}/Assets/Plugins'
-  - source: '{{settings}}'
-    target: '{{project}}/ProjectSettings'
+  - target: '{{__assets__}}'
+    content: ['{{__dir__}}/assets/*']
+  - target: '{{__plugins__}}'
+    content: ['{{__dir__}}/plugins/*']
+  - target: '{{__project__}}/ProjectSettings'
+    source: '{{__dir__}}/settings'
+  - target: '{{__project__}}/Packages'
+    source: '{{__dir__}}/packages'
