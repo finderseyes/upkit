@@ -315,14 +315,19 @@ class PackageLinker(object):
         :param params:
         :return:
         """
-        if not source:
-            if not content and not links:
-                raise ValueError(
-                    '"source" is undefined, but no "content" or "links" is given.'
-                )
+
+        # Priority: links > content > source
+        if not source and not content and not links:
+            raise ValueError(
+                'Either "source", "content" or "links" must be defined.'
+            )
 
         linkspec_path = None
         package_linkspec = {}
+
+        # make a copy of the dict
+        params = copy.deepcopy(params)
+
         if source:
             resolver = self._get_source_resolver(source)
             if not resolver:
@@ -330,30 +335,20 @@ class PackageLinker(object):
             else:
                 source = resolver.resolve(source)
 
+            # Try to resolve package linkspec.
             package_linkspec, linkspec_path = self.read_package_linkspec(source)
 
-        # make a copy of the dict
-        params = copy.deepcopy(params)
-        if source:
             params['__source__'] = source
             if set_dir and linkspec_path:
                 params['__dir__'] = source if not linkspec_path else os.path.dirname(linkspec_path)
 
-        # content
-        if not content:
-            content = package_linkspec.get('content', None)
-
-        if not exclude:
-            exclude = package_linkspec.get('exclude', None)
-
-        if not links:
-            links = package_linkspec.get('links', None)
-
-        if not external_links:
-            external_links = package_linkspec.get('external_links', None)
-
-        if not target:
-            target = package_linkspec.get('target', None)
+            # Package pre-define linkspec will be overwritten if one of these attributes are defined.
+            if not content and not links and not external_links and not exclude:
+                content = package_linkspec.get('content', content)
+                links = package_linkspec.get('links', links)
+                exclude = package_linkspec.get('exclude', exclude)
+                external_links = package_linkspec.get('external_links', external_links)
+                target = package_linkspec.get('target', target)
 
         if target:
             target = os.path.abspath(self._render_template(target, params))
