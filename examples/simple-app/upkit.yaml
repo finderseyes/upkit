@@ -1,20 +1,19 @@
 params:
-  project_name: demo
-  project_dir: '{{__dir__}}/unity-projects/{{project_name}}'
-  project_settings: '{{__dir__}}/project-settings'
-  assets: '{{project_dir}}/Assets'
-  plugins: '{{assets}}/Plugins'
-  packages: '{{__dir__}}/project-packages'
-
+  project: '{{__dir__}}/project'
+  
 links:
-  - source: '{{project_settings}}'
-    target: '{{project_dir}}/ProjectSettings'
+  - target: '{{__assets__}}'
+    content: ['{{__dir__}}/assets/*']
 
-  - source: '{{packages}}'
-    target: '{{assets}}'
-    linkspec:
-      content: ['{{packages}}/*']
-      exclude: ['{{packages}}/.gitignore']
+  - target: '{{__plugins__}}'
+    content: ['{{__dir__}}/plugins/*']
 
+  - target: '{{__project__}}/ProjectSettings'
+    source: '{{__dir__}}/settings'
+    
+  - target: '{{__project__}}/Packages'
+    source: '{{__dir__}}/packages'
+
+  # Dependencies
   - source: 'nuget:Newtonsoft.Json@11.0.2#lib/net35'
-    target: '{{plugins}}/Newtonsoft.Json'
+    target: '{{__plugins__}}/Newtonsoft.Json'
