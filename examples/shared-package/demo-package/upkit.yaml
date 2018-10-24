@@ -13,7 +13,3 @@ links:
     
   - target: '{{__project__}}/Packages'
     source: '{{__dir__}}/packages'
-
-  # Dependencies
-  - source: 'nuget:Newtonsoft.Json@11.0.2#lib/net35'
-    target: '{{__plugins__}}/Newtonsoft.Json'

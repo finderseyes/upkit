@@ -341,6 +341,9 @@ class PackageLinker(object):
             else:
                 source = resolver.resolve(source)
 
+            if not os.path.isdir(source):
+                raise ValueError('Source path "%s" not found.' % source)
+
             # Try to resolve package linkspec.
             package_linkspec, linkspec_path = self.read_package_linkspec(source)
 

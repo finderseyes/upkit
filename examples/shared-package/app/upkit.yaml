@@ -1,5 +1,6 @@
 params:
   project: '{{__dir__}}/project'
+  demo_package: '{{__dir__}}/../demo-package'
   
 links:
   - target: '{{__assets__}}'
@@ -14,6 +15,4 @@ links:
   - target: '{{__project__}}/Packages'
     source: '{{__dir__}}/packages'
 
-  # Dependencies
-  - source: 'nuget:Newtonsoft.Json@11.0.2#lib/net35'
-    target: '{{__plugins__}}/Newtonsoft.Json'
+  - source: '{{demo_package}}'
