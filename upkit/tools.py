@@ -23,15 +23,18 @@ class LinkPackageCommand(object):
                             help='Parameters.')
 
     def run(self, args):
-        from upkit.package_linker import PackageLinker
+        from upkit.package_linker import PackageLinker, UnityProjectLinkTemplate
 
         try:
             params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])
 
-            if args.config:
-                args.confg = os.path.abspath(args.config)
+            # if args.config:
+            #     args.config = os.path.abspath(args.config)
 
-            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder, params=params)
+            link_template = UnityProjectLinkTemplate()
+
+            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder,
+                                   link_template=link_template, params=params)
             linker.run()
             print('Package link completed.')
         except:

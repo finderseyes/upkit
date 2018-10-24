@@ -132,8 +132,7 @@ external_links:
 
         linker = PackageLinker()
         linker.link(source='../test_data/lib-a.1.0.8/content', target=output, forced=True,
-                    package_linkspec=package_linkspec,
-                    params=dict(resources_package='../test_data/empty_resources'))
+                    params=dict(resources_package='../test_data/empty_resources'), **package_linkspec)
 
         self.assertTrue(os.path.isfile('%s/aaa/data.txt' % output))
         self.assertTrue(os.path.isfile('%s/aaa/resources/default-data.txt' % output))

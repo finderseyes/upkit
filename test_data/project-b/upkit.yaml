@@ -1,0 +1,5 @@
+links:
+  - target: '{{__assets__}}'
+    content: ['{{__dir__}}/assets/*']
+    exclude: ['{{__dir__}}/assets/.gitignore']
+
