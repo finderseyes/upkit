@@ -1,32 +1,33 @@
 # Upkit &mdash; Unity3D project/package toolkit
 
-`upkit` is a command line toolkit that helps create/organize your Unity3D projects. With a simple configuration file, Upkit automatically resolves the project dependencies and generates a ready-to-use Unity project for you. 
+*Upkit* is a command line toolkit that helps create/organize your Unity3D projects. With a simple configuration file, Upkit automatically resolves the project dependencies, symbolic-links them and generates a ready-to-use Unity project for you. 
 
-_For those in a hurry, please go to [Getting Started](#getting-started) to see it in action._
+_For those in a hurry, please go to [Getting Started](#getting-started) to see *Upkit* in action._
 
 ## Why should you use it? 
 
-### Existing tools' limitations
+### Our usecase
 
-At first glance, Upkit shares some similarities with Projeny, which is a great tool that we frequently used in our team. However, as `Projeny` model imposes a flat, exclusive package hierarchy (everything must be a folder in either `Assets` or `Plugins` folder), off-the-shelf packages do not often work well together. For example, two packages having different native 
+If you are like us, these are what you need when developing a Unity project:
+* Total separation of 3rd party assets, plugins, dependencies from your assets/codes, to reduce the project size.
+* Quick package swapping for prototyping and production. 
+* Simple dependency resolving, from Nuget or Git repositories, or elsewhere. 
+* Simple configuration.
 
-There are tools that already helped with managing dependencies. In fact, we are big fans of the great tool `Projeny` for its simplicity, CI friendliness, and have used it frequently in our team. However, as `Projeny` model imposes a flat, exclusive package hierarchy (everything must be in either `Assets` or `Plugins` folder), it is not always possible to link external packages directly without repackaging. For example, two packages having different native libraries under the same folder `Plugins/Android` will not work together unless we copy these native libraries to another folder, namely `Plugins_Android` and link it under `Plugins/Android`. 
+### Limitations of existing tools
 
-As for Unity built-in Package Manager, although looking promising, it does not offer the following capabilities that we need:
-* Management of our private asset packages, legacy Unity packages, and even Nuget packages.
-* CI friendliness. 
+At first glance, Upkit shares some similarities with Projeny, which is a great tool that we frequently used in our team. However, as Projeny model imposes a flat, exclusive package hierarchy, off-the-shelf packages do not often work well together. For example, two packages having the same native library folder `Plugins/Android` will clash. Even when there are no name clashes, Unity-compatible Nuget packages are not easily linked at times. 
 
-### `upkit` remedies those issues and adds some tricks
+Unity 2018 officially comes with an easy-to-use built-in Package Manager. As of this writing, however, most of the Asset Store packages are still unavailable in the Package Manager, except those from Unity Technologies. Another drawback with current Package Manager is that we cannot use it for internal cross-project packages. This means that most of the time, we have to fall back to traditional approaches. 
 
-`upkit` was initially designed as a tool sitting between `nuget` (dependency resolving) and `Projeny` (project linking) in our pipeline, where extra links are generated before the actual project structure is created. As the tool evolves, `upkit` gradually becomes a superset to some of `Projeny` main features, to a point that it replaces `Projeny` completely in our pipeline.
+### Upkit remedies those issues and adds some more tricks
 
-In particular, `upkit` provides the following main features:
-* Packages can be linked to any location in the project folder, not just `Assets` and `Plugins`.
-* Packages can have sub-links pointing to anywhere in its content, not just its root. Therefore external or Nuget packages can be linked without repackaging.
-* File-level links, not just folders.
-* Packages can have their `linkspec.yaml` file to define how they should be linked (for cross-project reusable packages).
-* Simple configuration, yet extensible with parameters.
+Upkit was initially designed as our solution to the aforementioned limitations, which is a tool sitting between Nuget (dependency resolving step) and Projeny (project linking step) in our pipeline. As our projects evolve, we decided to simplify the whole process by combining the two steps into Upkit, making it even easier to use by adding the following features:
 
+* Single (YAML) file configuration, for dependency resolving, linking, etc.
+* Link anything with *Linkspec* &dash; determining how  folders, files are linked to your Unity project.
+* Create distributable packages (with Linkspec).
+* Out-of-the-box support for Nuget and Git dependencies.
 
 ## Getting Started
 
@@ -37,7 +38,8 @@ The source code to this project can be also found under [`examples/simple-app`](
 ### Prerequisites
 
 * Python 2.7 or above, with `pip`.
-* `nuget` for resolving Nuget dependencies.
+* (optional) `nuget` for resolving Nuget dependencies.
+* (optional) `git` for resolving Git dependencies.
 
 ### Installation
 
@@ -77,8 +79,7 @@ links:
     target: '{{__plugins__}}/Newtonsoft.Json'
 ```
 
-Notice the second-last line where we instruct Upkit to resolve a Nuget library with `nuget:` scheme. Yes, it's that simple. As of version `0.4.0`, Upkit also support the following scheme:
-* `git:` to resolve a package directly from a Git repository.
+Notice the second-last line where we instruct Upkit to resolve a Nuget library with `nuget:` scheme. Yes, it's that simple. 
 
 ### Step 3: Link to create Unity projects
 The final step is to generate a Unity project, by calling: 
@@ -87,7 +88,6 @@ The final step is to generate a Unity project, by calling:
 $ cd simple-app 
 $ upkit link -w dependencies
 ```
-
 Upkit will take a few seconds to resolve project's dependencies and generate a Unity project under `simple-app/project`. Open the folder in Unity as a project and you are ready to go.
 
 ## Documentation
