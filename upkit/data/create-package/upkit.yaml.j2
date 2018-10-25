@@ -6,11 +6,13 @@ params:
   project: '{{__dir__}}/project'
   
 links:
-  - target: '{{__assets__}}'
-    content: ['{{__dir__}}/assets/*']
+  - target: '{{__assets__}}'    
+    source: '{{__dir__}}/assets'
+    content: ['*']
 
   - target: '{{__plugins__}}'
-    content: ['{{__dir__}}/plugins/*']
+    source: '{{__dir__}}/plugins'
+    content: ['*']
 
   - target: '{{__project__}}/ProjectSettings'
     source: '{{__dir__}}/settings'

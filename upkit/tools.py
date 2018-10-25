@@ -16,7 +16,7 @@ class LinkPackageCommand(object):
         parser.add_argument(dest='config', default='upkit.yaml', nargs='?',
                             help='Path to link configuration file (config.yaml)')
 
-        parser.add_argument('-w', '--package-folder', dest='package_folder',
+        parser.add_argument('-w', '--package-folder', dest='package_folder', default='.packages',
                             help='Path to a folder where dependency packages will be resolved to.')
 
         parser.add_argument('-p', dest='params', action='append',
