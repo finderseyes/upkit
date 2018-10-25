@@ -6,7 +6,7 @@
 
 _For those in a hurry, please go to [Getting Started](#getting-started) to see *Upkit* in action._
 
-## How it works?
+<!-- ## How it works? -->
 
 ## Why should you use it? 
 

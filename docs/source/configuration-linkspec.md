@@ -76,33 +76,30 @@ will create `project-ios`, `project-android` and `project-windows` as separate U
 
 ### Linkspec
 
-To generate Unity projects, Upkit requires a list of link specifications, or *linkspec*s, which is basically a way to tell Upkit where to find a package, which part of its content (all or partial) and a target to which the content is linked. A linkspec may be defined using parameters in the table below:
+To generate Unity projects, Upkit requires a list of link specifications, or *linkspec*s, which is basically a way to tell Upkit where to find a package, its content (all or partial) and a target to which the content is linked. A linkspec may be defined using properties in the table below:
 
 **Linkspec properties**
 
-| Name      | Description                                                                                                |
-|-----------|------------------------------------------------------------------------------------------------------------|
-| `source`  | Source package location, can be a local or remote package.                                                 |
-| `content` | A list of glob patterns describing a set of files or folders as the source content.                        |
-| `exclude` | A list of glob patterns describing a set of files or folders should not be included in the source content. |
-| `target`  | The target to which the source files or folder is linked.                                                  |
-| `links`   | A list of sub-linkspecs for even more complex linking.                                                     |
+| Name      | Description                                                                |
+|-----------|----------------------------------------------------------------------------|
+| `source`  | Source package location, can be a local or remote package.                 |
+| `content` | Patterns describing source content.                                        |
+| `exclude` | Patterns describing files and folders not included in the  source content. |
+| `target`  | The target to which the source or its content is linked.                   |
+| `links`   | A list of sub-linkspecs for more complex linking.                          |
 
-Depending on which parameters are given, a linkspec instructs Upkit to operate in one of these modes:
-* **One-to-one:** when `source` is provided but not `content` and `links`. In this mode, Upkit links one source file or folder under the link `target`. 
-* **Many-to-one:** when `content` is provided but not `links`. In this mode, Upkit links files or folders match the patterns in `content` 
 
 #### `source` property
-* **Defines** a local source file, folder, or a remote Nuget package or Git repository.
-* **Is required** when `content` and `links` are missing.
-* **Has format** as one of
-  * `/path/to/local-file-or-folder` to define a local file or folder.
-  * `nuget:(package_id)@(package_version)[#(sub_path)]` to define a Nuget package, where `package_id` and `package_verion` are required, and `sub_path` is optional.
-  * `git:(repository_url)[@(branch_or_tag)][#(sub_path)]` to define a Git repository, where `repository_url` is required and `branch_or_tag` and `sub_path` expression.
+The `source` property describes a source package location where Upkit can find files and folder to link. There are three types of source packages supported by Upkit:
+* **Local file or folder**, where `source` takes the syntax `/path/to/local-file-or-folder`. 
+* **A Nuget package**, where `source` takes the syntax `nuget:(package_id)@(package_version)[#(sub_path)]`, in which: 
+  * `package_id` and `package_verion` are required.
+  * `sub_path` is optional.
+* **A Git repository**, where `source` takes the syntax `git:(repository_url)[@(branch_or_tag)][#(sub_path)]`, in which:
+  * `repository_url` is required.
+  * `branch_or_tag` and `sub_path` are optional.
 
-Note that
-* If `nuget:` or `git:` is used, the respective Nuget package or Git repository is resolved to a local folder specified by `-w` parameter, which is then used as a local source.
-* If  `nuget:` or `git:` is used and `sub_path` is given, the child file or folder by `sub_path` in the resolved package folder is used as a local source.
+When `source` refers to a Nuget package or a Git repository, Upkit first resolves the package or repository into a local folder under the container folder given by `-w` parameter, and then uses the local folder as a local source. If `sub_path` is given, the sub-path in the resolved folder is used as the local source instead.
   
 Examples:
 * `{{__dir__}}/Scripts`
@@ -114,30 +111,43 @@ Examples:
 
 #### `content` property
 
-* **Defines** a set of files or folder 
-* **Is required** when `source` and `links` are missing.
-* **Has format** as one of
-  * `/path/to/local-file-or-folder` to define a local file or folder.
-  * `nuget:(package_id)@(package_version)[#(sub_path)]` to define a Nuget package, where `package_id` and `package_verion` are required, and `sub_path` is optional.
-  * `git:(repository_url)[@(branch_or_tag)][#(sub_path)]` to define a Git repository, where `repository_url` is required and `branch_or_tag` and `sub_path` expression.
+The `content` property defines which files and folders should be included as a package content. It takes a list of patterns as in the example below:
+```yaml
+content: ['*']
+content: ['scripts/*', 'textures/*']
+```
 
-Note that
-* If `nuget:` or `git:` is used, the respective Nuget package or Git repository is resolved to a local folder specified by `-w` parameter, which is then used as a local source.
-* If  `nuget:` or `git:` is used and `sub_path` is given, the child file or folder by `sub_path` in the resolved package folder is used as a local source.
+All the patterns are relative to the `source`. By default, if no `content` is given, Upkit simply creates *one* link from `source` to `target`. If `content` is given, it creates multiple links, one for each file of folder in the source content to a file or folder under `target`. For example, given following items match the `content` patterns
+```
+data/child/A/
+data/B.txt
+C.png
+``` 
+When linking, the following links will be created under `target`
+```
+A/    --> data/child/A/
+B.txt --> data/B.txt
+C.png --> C.png
+```
 
-<!-- #### Defining local sources
+#### `exclude` property
 
+When `content` is defined, `exclude` can be used to remove some of the files and folders from the source content. `exclude` takes a list of patterns similar to `content`. For example: 
+```yaml
+content: ['*']
+exclude: ['Document', 'Document.meta']
+```
+will include everything under the source package, except `Document` and `Document.meta`.
 
-#### Linkspec 
+#### `target` property
 
-#### Link a local file or folder
+As the name implies, `target` is a local path defining where the source or its content should be linked to. 
 
-#### Link a set of files in a local folder
+#### `links` property
 
-#### Link a Nuget package 
+A linkspec may use sub-links, defined by `links` property when it needs more complex linking scenarios, where multiple `targets` is required. Each link in `links` is a linkspec itself, except that it shall not have further sub-links i.e. `source`, `target`, `content`, and `exclude` are allowed but not `links`. 
 
-#### Link a Git package -->
-
+`links` is often used in package linkspec files as explained in [Package linkspec](#package-linkspec). However, it can also be used to link packages where no linkspec file is provided.
 
 ## Package linkspec
 
