@@ -76,9 +76,56 @@ will create `project-ios`, `project-android` and `project-windows` as separate U
 
 ### Linkspec
 
-To generate Unity projects, a list of link specifications, or *linkspec*s in short, must be defined under `links` section. Basically, a linkspec is a way to tell Upkit where to find a package, which of its content (all or partial) and a target to which the content is linked. 
+To generate Unity projects, Upkit requires a list of link specifications, or *linkspec*s, which is basically a way to tell Upkit where to find a package, which part of its content (all or partial) and a target to which the content is linked. A linkspec may be defined using parameters in the table below:
 
-#### Defining local sources
+**Linkspec properties**
+
+| Name      | Description                                                                                                |
+|-----------|------------------------------------------------------------------------------------------------------------|
+| `source`  | Source package location, can be a local or remote package.                                                 |
+| `content` | A list of glob patterns describing a set of files or folders as the source content.                        |
+| `exclude` | A list of glob patterns describing a set of files or folders should not be included in the source content. |
+| `target`  | The target to which the source files or folder is linked.                                                  |
+| `links`   | A list of sub-linkspecs for even more complex linking.                                                     |
+
+Depending on which parameters are given, a linkspec instructs Upkit to operate in one of these modes:
+* **One-to-one:** when `source` is provided but not `content` and `links`. In this mode, Upkit links one source file or folder under the link `target`. 
+* **Many-to-one:** when `content` is provided but not `links`. In this mode, Upkit links files or folders match the patterns in `content` 
+
+#### `source` property
+* **Defines** a local source file, folder, or a remote Nuget package or Git repository.
+* **Is required** when `content` and `links` are missing.
+* **Has format** as one of
+  * `/path/to/local-file-or-folder` to define a local file or folder.
+  * `nuget:(package_id)@(package_version)[#(sub_path)]` to define a Nuget package, where `package_id` and `package_verion` are required, and `sub_path` is optional.
+  * `git:(repository_url)[@(branch_or_tag)][#(sub_path)]` to define a Git repository, where `repository_url` is required and `branch_or_tag` and `sub_path` expression.
+
+Note that
+* If `nuget:` or `git:` is used, the respective Nuget package or Git repository is resolved to a local folder specified by `-w` parameter, which is then used as a local source.
+* If  `nuget:` or `git:` is used and `sub_path` is given, the child file or folder by `sub_path` in the resolved package folder is used as a local source.
+  
+Examples:
+* `{{__dir__}}/Scripts`
+* `nuget:NewtonSoft.Json@11.0.2`
+* `nuget:NewtonSoft.Json@11.0.2#lib/net35` 
+* `git:https://github.com/finderseyes/upkit.git@develop`
+* `git:https://github.com/finderseyes/upkit.git#examples/simple-app`
+* `git:https://github.com/finderseyes/upkit.git@develop#examples/simple-app` 
+
+#### `content` property
+
+* **Defines** a set of files or folder 
+* **Is required** when `source` and `links` are missing.
+* **Has format** as one of
+  * `/path/to/local-file-or-folder` to define a local file or folder.
+  * `nuget:(package_id)@(package_version)[#(sub_path)]` to define a Nuget package, where `package_id` and `package_verion` are required, and `sub_path` is optional.
+  * `git:(repository_url)[@(branch_or_tag)][#(sub_path)]` to define a Git repository, where `repository_url` is required and `branch_or_tag` and `sub_path` expression.
+
+Note that
+* If `nuget:` or `git:` is used, the respective Nuget package or Git repository is resolved to a local folder specified by `-w` parameter, which is then used as a local source.
+* If  `nuget:` or `git:` is used and `sub_path` is given, the child file or folder by `sub_path` in the resolved package folder is used as a local source.
+
+<!-- #### Defining local sources
 
 
 #### Linkspec 
@@ -89,7 +136,7 @@ To generate Unity projects, a list of link specifications, or *linkspec*s in sho
 
 #### Link a Nuget package 
 
-#### Link a Git package
+#### Link a Git package -->
 
 
 ## Package linkspec
