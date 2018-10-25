@@ -1,7 +1,3 @@
-{%- set __dir__ = '{{__dir__}}' -%}
-{%- set __project__ = '{{__project__}}' -%}
-{%- set __assets__ = '{{__assets__}}' -%}
-{%- set __plugins__ = '{{__plugins__}}' -%}
 params:
   project: '{{__dir__}}/project'
   
@@ -17,3 +13,7 @@ links:
     
   - target: '{{__project__}}/Packages'
     source: '{{__dir__}}/packages'
+
+  # Dependencies
+  - source: 'nuget:Newtonsoft.Json@11.0.2#lib/net35'
+    target: '{{__plugins__}}/Newtonsoft.Json'

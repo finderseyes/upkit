@@ -4,10 +4,10 @@ params:
 links:
   - source: '{{__dir__}}/lib-a.1.0.8/content'
     target: '{{output}}/lib-a'
-    linkspec:
-      links:
-        - source: '{{__source__}}/aaa'
-          target: '{{__target__}}/aaa'
+    links:
+    - source: '{{__source__}}/aaa'
+      target: '{{__target__}}/aaa'
+
 
   - source: '{{__dir__}}/lib-c.1.0.0'
     target: '{{output}}/lib-c'

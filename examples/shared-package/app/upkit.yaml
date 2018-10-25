@@ -1,9 +1,6 @@
-{%- set __dir__ = '{{__dir__}}' -%}
-{%- set __project__ = '{{__project__}}' -%}
-{%- set __assets__ = '{{__assets__}}' -%}
-{%- set __plugins__ = '{{__plugins__}}' -%}
 params:
   project: '{{__dir__}}/project'
+  demo_package: '{{__dir__}}/../demo-package'
   
 links:
   - target: '{{__assets__}}'
@@ -17,3 +14,5 @@ links:
     
   - target: '{{__project__}}/Packages'
     source: '{{__dir__}}/packages'
+
+  - source: '{{demo_package}}'

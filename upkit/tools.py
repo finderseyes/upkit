@@ -13,7 +13,7 @@ class LinkPackageCommand(object):
     help = 'Link packages with given configs'
 
     def build_argument_parser(self, parser):
-        parser.add_argument('-c', '--config', dest='config', default='upkit.yaml',
+        parser.add_argument(dest='config', default='upkit.yaml', nargs='?',
                             help='Path to link configuration file (config.yaml)')
 
         parser.add_argument('-w', '--package-folder', dest='package_folder',
@@ -23,15 +23,18 @@ class LinkPackageCommand(object):
                             help='Parameters.')
 
     def run(self, args):
-        from upkit.package_linker import PackageLinker
+        from upkit.package_linker import PackageLinker, UnityProjectLinkTemplate
 
         try:
             params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])
 
-            if args.config:
-                args.confg = os.path.abspath(args.config)
+            # if args.config:
+            #     args.config = os.path.abspath(args.config)
 
-            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder, params=params)
+            link_template = UnityProjectLinkTemplate()
+
+            linker = PackageLinker(config_file=args.config, package_folder=args.package_folder,
+                                   link_template=link_template, params=params)
             linker.run()
             print('Package link completed.')
         except:
@@ -44,7 +47,7 @@ class CreatePackageCommand(object):
     help = 'Create a package.'
 
     def __init__(self):
-        self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'data'))
+        # self.data_folder = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data'))
         self.env = Environment(
             loader=PackageLoader('upkit', 'data/create-package'),
             autoescape=select_autoescape(['html', 'xml', 'nuspec'])
@@ -66,6 +69,7 @@ class CreatePackageCommand(object):
             os.mkdir(os.path.join(args.location, 'assets'))
             os.mkdir(os.path.join(args.location, 'plugins'))
             os.mkdir(os.path.join(args.location, 'settings'))
+            os.mkdir(os.path.join(args.location, 'packages'))
             os.mkdir(os.path.join(args.location, 'project'))
 
             # package_config_template_file = os.path.join(self.data_folder, 'create-package', 'package-config.yaml')

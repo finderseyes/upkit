@@ -110,7 +110,10 @@ def fs_link(source, target, hard_link=True, forced=False):
         if is_link(target):
             fs_unlink(target)
         else:
-            raise RuntimeError('Path "%s" exists, but it is not a link.' % target)
+            if os.path.isdir(target):
+                rmdir(target)
+            else:
+                remove(target)
     else:
         parent_dir = os.path.dirname(target)
         mkdir_p(parent_dir)

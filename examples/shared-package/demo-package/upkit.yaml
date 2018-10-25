@@ -1,7 +1,3 @@
-{%- set __dir__ = '{{__dir__}}' -%}
-{%- set __project__ = '{{__project__}}' -%}
-{%- set __assets__ = '{{__assets__}}' -%}
-{%- set __plugins__ = '{{__plugins__}}' -%}
 params:
   project: '{{__dir__}}/project'
   
