@@ -111,28 +111,28 @@ Examples:
 
 #### `content` property
 
-The `content` property defines which files and folders should be included as a package content. It takes a list of patterns as in the example below:
+By default, if `content` is not specified, Upkit treats the linkspec as *link-all* i.e. it will create one link from `source` to given `target`. To link part of the source, declare `content` as a list of glob patterns as in the example below:
 ```yaml
 content: ['*']
 content: ['scripts/*', 'textures/*']
 ```
 
-All the patterns are relative to the `source`. By default, if no `content` is given, Upkit simply creates *one* link from `source` to `target`. If `content` is given, it creates multiple links, one for each file of folder in the source content to a file or folder under `target`. For example, given following items match the `content` patterns
+When `content` is specified, Upkit will create multiple links, one for each item in the source content to an item with the same name under `target`. For example, given the following content items:
 ```
-data/child/A/
-data/B.txt
-C.png
+(source)/data/child/A/
+(source)/data/B.txt
+(source)/C.png
 ``` 
-When linking, the following links will be created under `target`
+Upon linking, the following links will be created:
 ```
-A/    --> data/child/A/
-B.txt --> data/B.txt
-C.png --> C.png
+(target)/A/    --> (source)/data/child/A/
+(target)/B.txt --> (source)/data/B.txt
+(target)/C.png --> (source)/C.png
 ```
 
 #### `exclude` property
 
-When `content` is defined, `exclude` can be used to remove some of the files and folders from the source content. `exclude` takes a list of patterns similar to `content`. For example: 
+`exclude` can be used with `content` to ignore some of the files and folders int the source content. `exclude` takes a list of patterns similar to `content`. For example: 
 ```yaml
 content: ['*']
 exclude: ['Document', 'Document.meta']
@@ -145,10 +145,46 @@ As the name implies, `target` is a local path defining where the source or its c
 
 #### `links` property
 
-A linkspec may use sub-links, defined by `links` property when it needs more complex linking scenarios, where multiple `targets` is required. Each link in `links` is a linkspec itself, except that it shall not have further sub-links i.e. `source`, `target`, `content`, and `exclude` are allowed but not `links`. 
+A linkspec may use sub-links, under `links` property, when it needs to define multiple link `targets`. Each item in `links` is a linkspec itself, except that it shall not have further sub-links i.e. `source`, `target`, `content`, and `exclude` are allowed but not `links`. 
 
-`links` is often used in package linkspec files as explained in [Package linkspec](#package-linkspec). However, it can also be used to link packages where no linkspec file is provided.
+`links` is often used in package linkspec files as explained in [Package linkspec](#package-linkspec). However, it can also be used to link packages where no linkspec file is provided, or to overwrite the linkspec of incompatible packages. 
 
 ## Package linkspec
 
+A package linkspec file could be included in a package to make linking with it easier when shared across multiple projects. Given a package `A`, Upkit tries to look for its linkspec file in the following paths:
+```
+A/linkspec.yaml
+A/linkspec.yml
+A/content/linkspec.yaml
+A/content/linkspec.yml
+```
+
+The format of linkspec file is also a linkspec as explained in [Linkspec](#linkspec) section.
+
+In the case where a package `A` has a linkspec file, linking with it can be as simple as: 
+```yaml
+# upkit.yaml
+links:
+  - source: '/source/to/A'
+```
+
+### `__source__` and `__target__` parameters
+In linkspec files, two additional built-in parameters `__source__` and `__target__` are available, if specified.
+
 ### Overwrite package linkspec
+A package linkspec can be overwriten in a configuration file if one of these properties are defined:
+* `content`
+* `exclude`
+* `links`
+
+In such case, Upkit will ignore the package linkspec and use the one in link configuration. For example: 
+
+```yaml
+# upkit.yaml
+links:
+  - source: '/source/to/A'
+    target: '/target/to-link'
+    content: ['data/*']
+```
+
+In this case, Upkit links all items under `A/data` to `target`, regardless of whatever `A` linkspec file defines. 
