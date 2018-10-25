@@ -33,7 +33,7 @@ Upkit was initially designed as our solution to the aforementioned limitations, 
 
 These instructions will use `upkit` to create a simple Unity3D project which depends on Newtonsoft.Json on Nuget Gallery.
 
-The source code to this project can be also found under [`examples/simple-app`](https://github.com/finderseyes/upkit/tree/develop/examples/appkit).
+The source code to this project can be also found under [`examples/simple-app`](https://github.com/finderseyes/upkit/tree/develop/examples/simple-app).
 
 ### Prerequisites
 
