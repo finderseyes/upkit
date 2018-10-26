@@ -2,7 +2,8 @@ params:
   project: '{{__dir__}}/../../temp/output/project-a'
 
 links:
-  - target: '{{__assets__}}'
-    content: ['{{__dir__}}/assets/*']
-    exclude: ['{{__dir__}}/assets/.gitignore']
+  - source: '{{__dir__}}/assets'
+    target: '{{__assets__}}'
+    content: ['*']
+    exclude: ['.gitignore']
 

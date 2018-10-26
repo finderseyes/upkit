@@ -58,15 +58,18 @@ $ upkit create-package simple-app
 Upkit will create a new folder named `simple-app`, where you can find `upkit.yaml`. This file contains all the information Upkit needs in order to create your Unity project. Now, modify it to let Upkit know the project will depends on `NewtonSoft.Json`: 
 
 ```yaml
+# upkit.yaml
 params:
   project: '{{__dir__}}/project'
   
 links:
-  - target: '{{__assets__}}'
-    content: ['{{__dir__}}/assets/*']
+  - target: '{{__assets__}}'    
+    source: '{{__dir__}}/assets'
+    content: ['*']
 
   - target: '{{__plugins__}}'
-    content: ['{{__dir__}}/plugins/*']
+    source: '{{__dir__}}/plugins'
+    content: ['*']
 
   - target: '{{__project__}}/ProjectSettings'
     source: '{{__dir__}}/settings'
@@ -79,20 +82,20 @@ links:
     target: '{{__plugins__}}/Newtonsoft.Json'
 ```
 
-Notice the second-last line where we instruct Upkit to resolve a Nuget library with `nuget:` scheme. Yes, it's that simple. 
+Notice the second-last line where we instruct Upkit to resolve a Nuget library with `nuget:` scheme. Yes, it's that simple! 
 
 ### Step 3: Link to create Unity projects
 The final step is to generate a Unity project, by calling: 
 
 ```
 $ cd simple-app 
-$ upkit link -w dependencies
+$ upkit link 
 ```
 Upkit will take a few seconds to resolve project's dependencies and generate a Unity project under `simple-app/project`. Open the folder in Unity as a project and you are ready to go.
 
 ## Documentation
 
-Work in progress.
+Go to [Project documentation](https://upkit.readthedocs.io/en/release-0.4.x/)
 
 ## Authors
 

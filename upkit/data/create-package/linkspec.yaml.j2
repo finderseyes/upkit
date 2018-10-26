@@ -5,16 +5,18 @@
 {%- set plugin_platforms = [ 'iOS', 'Android', 'x86_64' ] -%}
 links:
   - target: '{{__assets__}}'
-    content: ['{{__dir__}}/assets/*']
+    source: '{{__dir__}}/assets'
+    content: ['*']
 
   - target: '{{__plugins__}}'
-    content: ['{{__dir__}}/plugins/*']
+    source: '{{__dir__}}/plugins'
+    content: ['*']
     exclude: [{% for item in plugin_platforms %}
       '{{__dir__}}/plugins/{{item}}'{{', ' if not loop.last}}{% endfor %}
       ]
-
   {% for item in plugin_platforms %}
   - target: '{{__plugins__}}/{{item}}'
-    content: ['{{__dir__}}/plugins/{{item}}/*']
+    source: '{{__dir__}}/plugins/{{item}}'
+    content: ['*']
   {% endfor %}
 

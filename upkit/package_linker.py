@@ -323,9 +323,9 @@ class PackageLinker(object):
         """
 
         # Priority: links > content > source
-        if not source and not content and not links:
+        if not source and not links:
             raise ValueError(
-                'Either "source", "content" or "links" must be defined.'
+                'Either "source" or "links" must be defined.'
             )
 
         linkspec_path = None
@@ -374,12 +374,12 @@ class PackageLinker(object):
             else:
                 exclude_items = set(
                     p for item in exclude
-                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                    for p in glob.glob(os.path.abspath(os.path.join(source, self._render_template(item, params))))
                 ) if exclude else set()
 
                 content_items = [
                     p for item in content
-                    for p in glob.glob(os.path.abspath(self._render_template(item, params)))
+                    for p in glob.glob(os.path.abspath(os.path.join(source, self._render_template(item, params))))
                 ]
                 for content_item in content_items:
                     if content_item in exclude_items:
@@ -390,23 +390,36 @@ class PackageLinker(object):
                     utils.fs_link(content_item, content_item_target, hard_link=True, forced=forced)
         else:
             for item in child_packages:
-                item_target = os.path.abspath(self._render_template(item['target'], params))
+                item_target_spec = item.get('target', None)
+                if not item_target_spec:
+                    raise ValueError('"target" is required.')
+                item_target = os.path.abspath(self._render_template(item_target_spec, params))
+
+                item_source_spec = item.get('source', None)
+                if not item_source_spec:
+                    raise ValueError('"source" is required.')
+
+                item_source = os.path.abspath(self._render_template(item_source_spec, params))
 
                 content = item.get('content', None)
 
                 # content will overwrite the source
                 if not content:
-                    item_source = os.path.abspath(self._render_template(item['source'], params))
                     utils.fs_link(item_source, item_target, hard_link=True, forced=forced)
                 else:
                     exclude = item.get('exclude', None)
                     exclude_items = set(
                         p for i in exclude
-                        for p in glob.glob(os.path.abspath(self._render_template(i, params)))
+                        for p in glob.glob(os.path.abspath(
+                            os.path.join(item_source, self._render_template(i, params)))
+                        )
                     ) if exclude else set()
 
-                    content_items = [p for i in content for p in
-                                     glob.glob(os.path.abspath(self._render_template(i, params)))]
+                    content_items = [
+                        p for i in content for p in
+                        glob.glob(os.path.abspath(os.path.join(item_source, self._render_template(i, params))))
+                    ]
+
                     for content_item in content_items:
                         if content_item in exclude_items:
                             continue
