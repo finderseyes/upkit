@@ -1,0 +1,13 @@
+{% if a is undefined %}
+  {% set a='default' %}
+{% endif %}
+params:
+  b: '{{a}}'
+
+links:
+{% if a == 'default' %}
+  - source: 'a-not-specified'
+{% else %}
+  - source: '{{a}}'
+{% endif %}
+

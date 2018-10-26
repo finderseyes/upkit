@@ -1,0 +1,20 @@
+{% if platform is undefined %}
+  {% set platform='ios' %}
+{% endif %}
+params:
+  project: '{{__dir__}}/../../temp/output/project-c-{{platform}}'
+
+links:
+{% if platform == 'ios' %}
+  - source: '{{__dir__}}/assets'
+    target: '{{__assets__}}'
+    content: ['ios-*']
+{% else %}
+  - source: '{{__dir__}}/assets'
+    target: '{{__assets__}}'
+    content: ['android-*']
+
+{% endif %}
+
+  - source: '{{__dir__}}/plugins'
+
