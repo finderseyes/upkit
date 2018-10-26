@@ -16,7 +16,7 @@ class LinkPackageCommand(object):
         parser.add_argument(dest='config', default='upkit.yaml', nargs='?',
                             help='Path to link configuration file (config.yaml)')
 
-        parser.add_argument('-w', '--package-folder', dest='package_folder', default='.packages',
+        parser.add_argument('-w', '--package-folder', dest='package_folder', default=None,
                             help='Path to a folder where dependency packages will be resolved to.')
 
         parser.add_argument('-p', dest='params', action='append',
@@ -28,8 +28,8 @@ class LinkPackageCommand(object):
         try:
             params = dict((k, v) for (k, v) in [i.split('=') for i in utils.guaranteed_list(args.params)])
 
-            # if args.config:
-            #     args.config = os.path.abspath(args.config)
+            if not args.package_folder:
+                args.package_folder = os.path.join(os.path.dirname(args.config), '.packages')
 
             link_template = UnityProjectLinkTemplate()
 
