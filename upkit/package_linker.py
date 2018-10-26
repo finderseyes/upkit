@@ -176,16 +176,48 @@ class PackageLinker(object):
             with open(config_file, 'r') as fh:
                 content = fh.read()
 
-                config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
-
-                # parameters
-                params_data = config_data.get('params', {})
                 params.update({
                     '__cwd__': os.path.abspath(os.getcwd()),
                     '__dir__': os.path.abspath(os.path.dirname(config_file)),
                 })
-
                 self._params = copy.deepcopy(params)
+
+                jinja_support = True
+                if jinja_support:
+                    import jinja2
+
+                    template = Template(content)
+                    default_variables = set(
+                        name for name in dir(template.module)
+                        if not name.startswith('__') and getattr(template.module, name)
+                    )
+
+                    ast = self._jinja_environment.parse(content)
+                    undeclared_variables = meta.find_undeclared_variables(ast)
+                    second_pass_params = copy.deepcopy(params)
+
+                    for v in undeclared_variables:
+                        if v not in second_pass_params and v not in default_variables:
+                            second_pass_params[v] = '{{%s}}' % v
+
+                    @jinja2.contextfunction
+                    def __complete_internal__(context):
+                        self._params.update(context.vars)
+
+                        # Must return something.
+                        return ''
+
+                    content = '%s\n{{ __complete_internal__() }}' % content
+
+                    # Transform the content.
+                    content = Template(content).render(
+                        __complete_internal__=__complete_internal__, **second_pass_params
+                    )
+
+                config_data = yaml.load(content, Loader=yamlordereddictloader.Loader)
+
+                # parameters
+                params_data = config_data.get('params', {})
                 self._expand_params(params_data, exclude=params)
 
                 if self._link_template:
@@ -195,12 +227,6 @@ class PackageLinker(object):
                 links_data = config_data.get('links', {})
 
                 def _to_link(i):
-                    # source_spec = i.get('source', None)
-                    # source = self._render_template(source_spec, self._params) if source_spec else None
-                    #
-                    # target_spec = i.get('target', None)
-                    # target = os.path.abspath(self._render_template(target_spec, self._params)) if target_spec else None
-
                     return {
                         'source': i.get('source', None),
                         'target': i.get('target', None),
@@ -345,7 +371,9 @@ class PackageLinker(object):
                 raise ValueError('Source path "%s" not found.' % source)
 
             # Try to resolve package linkspec.
-            package_linkspec, linkspec_path = self.read_package_linkspec(source)
+            package_linkspec, linkspec_path = self.read_package_linkspec(
+                source, params=dict(__source__=source, __target__=target, **params)
+            )
 
             params['__source__'] = source
             if set_dir and linkspec_path:
@@ -448,18 +476,18 @@ class PackageLinker(object):
                         if not os.path.exists(content_item_target):
                             utils.copy(content_item, content_item_target)
 
-    def read_package_linkspec(self, source):
+    def read_package_linkspec(self, source, params={}):
         """
         Reads the linkspec if exist in given source folder.
         :param source: the folder containing linkspec file
         :return: a linkspec dictionary or empty dictionary.
         """
-        linkspec, path = self._read_linkspec_yaml_file(source)
+        linkspec, path = self._read_linkspec_yaml_file(source, params=params)
         # linkspec = self._read_package_linkspec_file(source) if not linkspec else linkspec
         linkspec = {} if not linkspec else linkspec
         return linkspec, path
 
-    def _read_linkspec_yaml_file(self, source):
+    def _read_linkspec_yaml_file(self, source, params={}):
         file = os.path.join(source, 'linkspec.yaml')
         if not os.path.isfile(file):
             file = os.path.join(source, 'linkspec.yml')
@@ -475,6 +503,14 @@ class PackageLinker(object):
 
         with open(file, 'r') as fh:
             content = fh.read()
+
+            jinja_support = True
+            if jinja_support:
+                params.update({
+                    '__dir__': os.path.dirname(file),
+                })
+                content = self._render_template(content, params)
+
             return yaml.load(content, Loader=yamlordereddictloader.Loader), file
 
     def _read_package_linkspec_file(self, source):

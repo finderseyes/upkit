@@ -1,0 +1,13 @@
+links:
+{% if platform == 'ios' %}
+  - source: '{{__dir__}}'
+    target: '{{__plugins__}}'
+    content: [ 'ios-plugin', 'ios-plugin.meta' ]
+
+{% else %}
+
+  - source: '{{__dir__}}'
+    target: '{{__plugins__}}'
+    content: [ 'android-plugin', 'android-plugin.meta' ]
+
+{% endif %}

@@ -416,4 +416,27 @@ external_links:
         self.assertTrue(os.path.isdir(os.path.join(output, 'ccc')))
         self.assertTrue(os.path.isfile(os.path.join(output, 'README.md')))
 
+    def test_load_jinja_config_with_jinja_variables(self):
+        linker = PackageLinker(config_file='../test_data/config-with-jinja-variables.yaml')
+
+        self.assertTrue(linker.params['__dir__'], linker.params['a'])
+        self.assertTrue(111, linker.params['b'])
+        self.assertTrue(linker.params['__dir__'], linker.params['c'])
+        self.assertTrue('111', linker.params['d'])
+        self.assertTrue('111222', linker.params['e'])
+
+    def test_load_jinja_config_with_controls(self):
+        linker = PackageLinker(config_file='../test_data/config-with-jinja-controls.yaml')
+
+        self.assertTrue('default', linker.params['a'])
+        self.assertTrue('default', linker.params['b'])
+        self.assertTrue('a-not-specified', linker.links[0]['source'])
+
+    def test_load_jinja_config_with_controls_and_overwrite_param(self):
+        linker = PackageLinker(config_file='../test_data/config-with-jinja-controls.yaml',
+                               params=dict(a='aaaa'))
+
+        self.assertTrue('aaaa', linker.params['a'])
+        self.assertTrue('aaaa', linker.params['b'])
+        self.assertTrue('aaaa', linker.links[0]['source'])
 

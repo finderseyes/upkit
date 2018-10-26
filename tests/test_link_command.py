@@ -14,7 +14,7 @@ class LinkPackageCommandTestCase(unittest.TestCase):
         command = LinkPackageCommand()
 
         args_type = namedtuple('args', ['config', 'package_folder', 'params'])
-        args = args_type(config='../test_data/project-a/upkit.yaml', package_folder=None, params={})
+        args = args_type(config='../test_data/project-a/upkit.yaml', package_folder='../temp/packages', params={})
         command.run(args)
 
         self.assertTrue(os.path.isdir(output))
@@ -29,8 +29,25 @@ class LinkPackageCommandTestCase(unittest.TestCase):
         command = LinkPackageCommand()
 
         args_type = namedtuple('args', ['config', 'package_folder', 'params'])
-        args = args_type(config='../test_data/project-b/upkit.yaml', package_folder=None, params={})
+        args = args_type(config='../test_data/project-b/upkit.yaml', package_folder='../temp/packages', params={})
 
         with self.assertRaises(SystemExit):
             command.run(args)
+
+    def test_should_link_with_jinja_config(self):
+        output = '../temp/output/project-c-ios'
+        utils.rmdir(output)
+
+        command = LinkPackageCommand()
+
+        args_type = namedtuple('args', ['config', 'package_folder', 'params'])
+        args = args_type(config='../test_data/project-c/upkit.yaml', package_folder='../temp/packages', params={})
+        command.run(args)
+
+        self.assertTrue(os.path.isdir(output))
+        self.assertTrue(os.path.isdir(os.path.join(output, 'Assets/ios-asset')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'Assets/ios-asset.meta')))
+        self.assertTrue(os.path.isdir(os.path.join(output, 'Assets/Plugins/ios-plugin')))
+        self.assertTrue(os.path.isfile(os.path.join(output, 'Assets/Plugins/ios-plugin.meta')))
+        self.assertFalse(os.path.exists(os.path.join(output, 'Assets/.gitignore')))
 
