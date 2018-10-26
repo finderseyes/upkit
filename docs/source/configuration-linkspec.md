@@ -56,7 +56,7 @@ Note that only `__cwd__` and `__dir__` are accessible in `params` section.
 
 #### Overwriting parameters
 
-Given a configuration, its user-defined parameters can be overwriten at runtime by passing `-p name=value` to the `link` command. This is particularly useful when you need to use the configuration file as a template for multiple Unity projects with slightly different parameters. For example, a configuration for multiple platforms may look like: 
+Given a configuration, its user-defined parameters can be overwriten at link-time by passing `-p param_name=param_value` to `link` command. This is particularly useful when you need to use the configuration file as a template for multiple Unity projects with slightly different parameters. For example, a configuration for multiple platforms may look like: 
 
 ```yaml
 params:
@@ -76,7 +76,7 @@ will create `project-ios`, `project-android` and `project-windows` as separate U
 
 ### Linkspec
 
-To generate Unity projects, Upkit requires a list of link specifications, or *linkspec*s, which is basically a way to tell Upkit where to find a package, its content (all or partial) and a target to which the content is linked. A linkspec may be defined using properties in the table below:
+To generate Unity projects, Upkit requires a list of link specifications, or *linkspec*s, which basically is a way to tell Upkit where to find a package, its content (all or partial) and a target to which the content is linked. A linkspec may be defined using properties in the table below:
 
 **Linkspec properties**
 
@@ -90,16 +90,16 @@ To generate Unity projects, Upkit requires a list of link specifications, or *li
 
 
 #### `source` property
-The `source` property describes a source package location where Upkit can find files and folder to link. There are three types of source packages supported by Upkit:
-* **Local file or folder**, where `source` takes the syntax `/path/to/local-file-or-folder`. 
-* **A Nuget package**, where `source` takes the syntax `nuget:(package_id)@(package_version)[#(sub_path)]`, in which: 
+The `source` property describes a source package location containing files and folder to link. There are three types of source packages supported by Upkit:
+* **Local file or folder**, when `source` takes the syntax `/path/to/local-file-or-folder`. 
+* **A Nuget package**, when `source` takes the syntax `nuget:(package_id)@(package_version)[#(sub_path)]`, in which: 
   * `package_id` and `package_verion` are required.
   * `sub_path` is optional.
-* **A Git repository**, where `source` takes the syntax `git:(repository_url)[@(branch_or_tag)][#(sub_path)]`, in which:
+* **A Git repository**, when `source` takes the syntax `git:(repository_url)[@(branch_or_tag)][#(sub_path)]`, in which:
   * `repository_url` is required.
   * `branch_or_tag` and `sub_path` are optional.
 
-When `source` refers to a Nuget package or a Git repository, Upkit first resolves the package or repository into a local folder under the container folder given by `-w` parameter, and then uses the local folder as a local source. If `sub_path` is given, the sub-path in the resolved folder is used as the local source instead.
+When `source` refers to a Nuget package or a Git repository, Upkit first resolves the package or repository into a local folder under the container folder given by `-w` parameter (default to `.packages`), and then uses the resolved folder as a local source. If `sub_path` is given, the sub-path in the resolved folder is used as the local source instead.
   
 Examples:
 * `{{__dir__}}/Scripts`
@@ -111,44 +111,83 @@ Examples:
 
 #### `content` property
 
-The `content` property defines which files and folders should be included as a package content. It takes a list of patterns as in the example below:
+By default, if `content` is not specified, Upkit treats a linkspec as *link-all* i.e. it will create one link from its `source` to its `target`. To patially link a source, declare its `content` as a list of glob patterns in the example below:
 ```yaml
+# include everything
 content: ['*']
+
+# include only files or folders under scripts/ and textures/.
 content: ['scripts/*', 'textures/*']
 ```
 
-All the patterns are relative to the `source`. By default, if no `content` is given, Upkit simply creates *one* link from `source` to `target`. If `content` is given, it creates multiple links, one for each file of folder in the source content to a file or folder under `target`. For example, given following items match the `content` patterns
+When `content` is specified, Upkit will create multiple links, one for each item in the source content to an item with the same name under `target`. For example, given the following content items:
 ```
-data/child/A/
-data/B.txt
-C.png
+(source)/data/child/A/
+(source)/data/B.txt
+(source)/C.png
 ``` 
-When linking, the following links will be created under `target`
+Upon linking, the following links will be created:
 ```
-A/    --> data/child/A/
-B.txt --> data/B.txt
-C.png --> C.png
+(target)/A/    --> (source)/data/child/A/
+(target)/B.txt --> (source)/data/B.txt
+(target)/C.png --> (source)/C.png
 ```
 
 #### `exclude` property
 
-When `content` is defined, `exclude` can be used to remove some of the files and folders from the source content. `exclude` takes a list of patterns similar to `content`. For example: 
+`exclude` can be used in tandem with `content` to ignore some of the files and folders in a source content. `exclude` takes a list of patterns similar to `content`. For example: 
 ```yaml
 content: ['*']
 exclude: ['Document', 'Document.meta']
 ```
-will include everything under the source package, except `Document` and `Document.meta`.
+will include everything under a source package, except its `Document` and `Document.meta`.
 
 #### `target` property
 
-As the name implies, `target` is a local path defining where the source or its content should be linked to. 
+As the name implies, `target` is a local path defining where a source or its content should be linked to. 
 
 #### `links` property
 
-A linkspec may use sub-links, defined by `links` property when it needs more complex linking scenarios, where multiple `targets` is required. Each link in `links` is a linkspec itself, except that it shall not have further sub-links i.e. `source`, `target`, `content`, and `exclude` are allowed but not `links`. 
+A linkspec may use sub-links, under `links` property, when it needs to define multiple link targets. Each item in `links` is also a linkspec, except that it shall not have further sub-links i.e. `source`, `target`, `content`, and `exclude` are allowed but not `links`. 
 
-`links` is often used in package linkspec files as explained in [Package linkspec](#package-linkspec). However, it can also be used to link packages where no linkspec file is provided.
+`links` is often used in package linkspec files as explained in [Package linkspec](#package-linkspec). However, it can also be used to link packages where no linkspec file is provided, or to overwrite the linkspec of incompatible packages. 
 
 ## Package linkspec
 
+A package linkspec file could be included in a package to make linking with it easier when shared across multiple projects. Given a package `A`, Upkit tries to look for its linkspec file in the following paths:
+```
+A/linkspec.yaml
+A/linkspec.yml
+A/content/linkspec.yaml
+A/content/linkspec.yml
+```
+
+The format of linkspec file is also a linkspec as explained in [Linkspec](#linkspec) section.
+
+In the case where a package `A` has a linkspec file, linking with it can be as simple as: 
+```yaml
+# upkit.yaml
+links:
+  - source: '/source/to/A'
+```
+
+### `__source__` and `__target__` parameters
+In linkspec files, two additional built-in parameters `__source__` and `__target__` are available, if specified.
+
 ### Overwrite package linkspec
+A package linkspec can be overwriten in a configuration file if one of these properties are defined:
+* `content`
+* `exclude`
+* `links`
+
+In such case, Upkit will ignore the package linkspec and use the one in link configuration. For example: 
+
+```yaml
+# upkit.yaml
+links:
+  - source: '/source/to/A'
+    target: '/target/to-link'
+    content: ['data/*']
+```
+
+In this case, Upkit links all items under `A/data` to `target`, regardless of whatever `A` linkspec file defines. 
